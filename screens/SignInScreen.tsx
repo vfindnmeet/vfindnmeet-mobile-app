@@ -21,6 +21,7 @@ import EditOptions from '../components/profileInfo/EditOptions';
 import BottomModal from '../components/BottomModal';
 import EditItem from '../components/profileInfo/EditItem';
 import LanguageBottomModal from '../components/LanguageBottomModal';
+import { STORAGE_LANG_KEY, STORAGE_LOGIN_DATA_KEY } from '../constants';
 
 export default function SignInScreen({ navigation }: any) {
   const dispatch = useDispatch();
@@ -35,7 +36,7 @@ export default function SignInScreen({ navigation }: any) {
   const [showLangModal, setShowLangModal] = useState(false);
 
   useEffect(() => {
-    getStorageItem('vi-item')
+    getStorageItem(STORAGE_LANG_KEY)
       .then(lang => {
         setLang(lang || DEFAULT_LANG);
       });
@@ -57,7 +58,7 @@ export default function SignInScreen({ navigation }: any) {
         // console.log('login result:');
         // console.log(result);
 
-        return setStorageItem('vi-user-data', JSON.stringify(result))
+        return setStorageItem(STORAGE_LOGIN_DATA_KEY, JSON.stringify(result))
           .then(() => result);
         // setLoading(false);
       })

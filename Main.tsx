@@ -18,6 +18,7 @@ import { getRouteSelector } from './store/selectors/route';
 import { incrNotSeenMessagesCount, seeChat, setNotSeenMessagesCount } from './store/actions/notification';
 import usePushNotification from './hooks/usePushNotification';
 import useOnMessage from './hooks/useOnMessage';
+import { STORAGE_LOGIN_DATA_KEY } from './constants';
 
 export default function Main() {
   const dispatch = useDispatch();
@@ -147,7 +148,7 @@ export default function Main() {
   }, [token]);
 
   useEffect(() => {
-    getStorageItem('vi-user-data')
+    getStorageItem(STORAGE_LOGIN_DATA_KEY)
       .then(json => {
         if (!json) {
           dispatch(logOutUser());
@@ -176,7 +177,7 @@ export default function Main() {
       })
       .catch(e => {
         if (e instanceof UnauthorizedError) {
-          removeStorageItem('vi-user-data').then(() => dispatch(logOutUser()))
+          removeStorageItem(STORAGE_LOGIN_DATA_KEY).then(() => dispatch(logOutUser()))
         }
       });
   }, [token]);

@@ -17,8 +17,7 @@ import moment from 'moment';
 import EditOptions from '../components/profileInfo/EditOptions';
 import SettingsHeader from '../navigation/SettingsHeader';
 import { useTranslation } from 'react-i18next';
-
-export const STORAGE_LANG_KEY = 'vi-lang';
+import { STORAGE_LANG_KEY } from '../constants';
 
 export default function SettingsScreen(props: any) {
   const isMounted = useIsMounted();

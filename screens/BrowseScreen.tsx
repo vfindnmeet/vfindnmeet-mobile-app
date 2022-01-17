@@ -18,6 +18,7 @@ import { useRoute } from '@react-navigation/native';
 import { clearRoute, setRoute } from '../store/actions/route';
 import { useTranslation } from 'react-i18next';
 import useRouteTrack from '../hooks/useRouteTrack';
+import { STORAGE_BROWSE_OPTIONS_KEY } from '../constants';
 
 export default function BrowseScreen(props: any) {
   // const route = useRoute();
@@ -71,7 +72,7 @@ export default function BrowseScreen(props: any) {
   // }, []);
 
   useEffect(() => {
-    getStorageItem('vi-browse-options')
+    getStorageItem(STORAGE_BROWSE_OPTIONS_KEY)
       .then(data => parseJson(data as string))
       .then(data => {
         if (!isMounted.current) return;
@@ -196,7 +197,7 @@ export default function BrowseScreen(props: any) {
         onHide={() => dispatch(hideBrowseOptionModal())}
         onlineOnly={onlineOnly}
         setOnlineOnly={(checked: boolean) => {
-          setStorageItem('vi-browse-options', JSON.stringify({ onlineOnly: checked }))
+          setStorageItem(STORAGE_BROWSE_OPTIONS_KEY, JSON.stringify({ onlineOnly: checked }))
             .then(() => {
               if (!isMounted.current) return;
 

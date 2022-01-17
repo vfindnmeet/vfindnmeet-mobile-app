@@ -8,12 +8,13 @@ import Main from './Main';
 import './i18n/i18n.config';
 import { useTranslation } from 'react-i18next';
 import { getStorageItem } from './utils';
+import { STORAGE_LANG_KEY } from './constants';
 
 export default function App() {
   const { i18n } = useTranslation();
 
   useEffect(() => {
-    getStorageItem('vi-lang')
+    getStorageItem(STORAGE_LANG_KEY)
     .then(lang => {
       i18n.changeLanguage(lang || 'bg');
     });

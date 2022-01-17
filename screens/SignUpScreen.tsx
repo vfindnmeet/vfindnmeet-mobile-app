@@ -15,6 +15,7 @@ import { useDispatch } from 'react-redux';
 import { setLoggedUser } from '../store/actions/auth';
 import { useTranslation } from 'react-i18next';
 import LanguageBottomModal from '../components/LanguageBottomModal';
+import { STORAGE_LANG_KEY } from '../constants';
 
 export default function SignUpScreen({ navigation }: any) {
   const dispatch = useDispatch();
@@ -41,7 +42,7 @@ export default function SignUpScreen({ navigation }: any) {
   const [showLangModal, setShowLangModal] = useState(false);
 
   useEffect(() => {
-    getStorageItem('vi-item')
+    getStorageItem(STORAGE_LANG_KEY)
       .then(lang => {
         setLang(lang || DEFAULT_LANG);
       });

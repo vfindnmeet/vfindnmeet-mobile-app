@@ -1,0 +1,1 @@
+- change pass & like buttons design
