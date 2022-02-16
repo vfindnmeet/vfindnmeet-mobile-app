@@ -1,58 +1,37 @@
 import React, { useEffect, useContext, useState } from 'react';
-import { Image, View, Platform } from 'react-native';
+import { Image, View, Platform, TouchableWithoutFeedback } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { ActivityIndicator, Colors, IconButton, TouchableRipple } from 'react-native-paper';
-import { deleteFile, uploadFile } from '../services/api';
 import { getTokenSelector } from '../store/selectors/auth';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { deleteUserImage, pickImageFromLilbrary, uploadUserImage } from '../utils/media';
+import InternalServerError from '../errors/InternalServerError';
+import BadRequestError from '../errors/BadRequestError';
+import { useIsMounted } from '../hooks/useIsMounted';
+import { showErrorModal } from '../store/actions/modal';
+import UnauthorizedError from '../errors/UnauthorizedError';
+import { requestMediaLibraryPermissions } from '../utils';
+import { GALELRY_ADD_ICON_SIZE, ICON_SIZE } from '../constants';
 
-const uploadImage = async (
-  fileToUpload: {
-    uri: string;
-    name: string;
-    type: string;
-    width?: number;
-    height?: number;
-  },
-  token: string | null,
-  replaceImageId?: string
-) => {
-  const res = await uploadFile(fileToUpload, replaceImageId, token as string);
+export default function OnboardingImagePicker(props: any) {
+  const dispatch = useDispatch();
+  const isMounted = useIsMounted();
 
-  const responseJson = await res.json();
-
-  return responseJson.images;
-};
-
-const deleteImage = async (imageId: string, token: string | null) => {
-  const res: any = await deleteFile(imageId, token as string);
-
-  const responseJson = await res.json();
-  if (responseJson.status == 1) {
-    alert('Upload Successful');
-  }
-
-  return responseJson.images;
-};
-
-export default function CImagePicker(props: any) {
   const token = useSelector(getTokenSelector);
 
   const { images, setImages, setError, allowImageChaning } = props;
   const [loadingImages, setLoadingImages] = useState<{ [key: string]: boolean }>({})
 
   useEffect(() => {
-    (async () => {
-      if (Platform.OS !== 'web') {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== 'granted') {
-          alert('Sorry, we need camera roll permissions to make this work!');
-        } else {
-          // console.log('GRANTED!!');
-        }
-      }
-    })();
+    requestMediaLibraryPermissions();
+    //   if (Platform.OS === 'web') return;
+    // ImagePicker.requestMediaLibraryPermissionsAsync()
+    //   .then(({ status }: any) => {
+    //     if (status !== 'granted') {
+    //       alert('Sorry, we need camera roll permissions to make this work!');
+    //     }
+    //   });
   }, []);
 
   const setImageLoading = (loading: boolean, imageId?: string) => {
@@ -67,37 +46,45 @@ export default function CImagePicker(props: any) {
       return;
     }
 
-    const result: any = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      // allowsEditing: true,
-      // aspect: [4, 3],
-      quality: 1,
-    });
+    try {
+      const result: any = await pickImageFromLilbrary();
 
-    if (result.cancelled) {
-      return;
+      if (!result) return;
+      // if (result.width <= 600 || result.height <= 600) {
+      //   setError('Image must be a size of at least 600x600.');
+
+      //   return;
+      // }
+      if (result.width <= 400 || result.height <= 400) {
+        dispatch(showErrorModal({ message: 'Image must be a size of at least 400x400.' }));
+
+        return;
+      }
+
+      setImageLoading(true, imageId);
+      const userImages: { uri: string }[] = await uploadUserImage({
+        uri: result.uri,
+        name: 'image',
+        type: result.type,
+        width: result.width,
+        height: result.height
+      }, token, imageId);
+
+      if (!isMounted.current) return;
+
+      setImages(userImages);
+      // setImageLoading(false, imageId);
+    } catch (e) {
+      if (e instanceof InternalServerError || e instanceof BadRequestError) {
+        setError('Error uploading image.')
+      } else {
+        setError('Error opening images.')
+      }
+    } finally {
+      if (!isMounted.current) return;
+
+      setImageLoading(false, imageId);
     }
-
-    const uri = result.uri;
-    const a = uri.split('.');
-
-    if (result.width <= 600 || result.height <= 600) {
-      setError('Image must be a size of at least 600x600.');
-
-      return;
-    }
-
-    setImageLoading(true, imageId);
-    const userImages: { uri: string }[] = await uploadImage({
-      uri,
-      name: 'image',
-      type: `image/${a[a.length - 1]}`,
-      width: result.width,
-      height: result.height
-    }, token, imageId);
-
-    setImages(userImages);
-    setImageLoading(false, imageId);
   };
 
   const onRemoveImage = async (image: any, ix: number) => {
@@ -106,10 +93,21 @@ export default function CImagePicker(props: any) {
     }
 
     setImageLoading(true, image.imageId);
-    const newImages = await deleteImage(image.imageId, token);
 
-    setImages(newImages);
-    setImageLoading(false, image.imageId);
+    try {
+      const images = await deleteUserImage(image.imageId, token);
+
+      if (!isMounted.current) return;
+
+      setImages(images);
+      setImageLoading(false, image.imageId);
+    } catch (e) {
+      if (e instanceof UnauthorizedError) {
+
+      } else {
+        dispatch(showErrorModal({ message: 'Internal server error.' }))
+      }
+    }
   };
 
   const listImages = [];
@@ -132,9 +130,9 @@ export default function CImagePicker(props: any) {
             width: '50%',
             padding: 2,
           }}>
-            <TouchableRipple
+            <TouchableWithoutFeedback
               onPress={() => onOpenImagePicker(image?.imageId)}
-              rippleColor="rgba(0, 0, 0, .32)"
+            // rippleColor="rgba(0, 0, 0, .32)"
             >
               <View style={{
                 borderWidth: 1,
@@ -160,7 +158,7 @@ export default function CImagePicker(props: any) {
                       }} />
                       <IconButton
                         icon="close"
-                        size={25}
+                        size={ICON_SIZE}
                         color={Colors.redA700}
                         onPress={() => onRemoveImage(image, ix)}
                         style={{
@@ -194,12 +192,12 @@ export default function CImagePicker(props: any) {
                       justifyContent: 'center',
                       alignItems: 'center'
                     }}>
-                      <MaterialCommunityIcons name="plus-circle" size={55} />
+                      <MaterialCommunityIcons name="plus-circle" size={GALELRY_ADD_ICON_SIZE} />
                     </View>
                   )
                 )}
               </View>
-            </TouchableRipple>
+            </TouchableWithoutFeedback>
           </View>
         ))}
       </View>

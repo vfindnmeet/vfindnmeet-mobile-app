@@ -1,23 +1,22 @@
-import { useRoute } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { Button, Colors } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
+import { useIsMounted } from '../hooks/useIsMounted';
 import useRouteTrack from '../hooks/useRouteTrack';
 import BaseHeader from '../navigation/BaseHeader';
 import CBottomTabs from '../navigation/CBottomTabs';
-import CustomHeader from '../navigation/CustomHeader';
 import { logout } from '../services/api';
 import { logOutUser } from '../store/actions/auth';
 import { showDeactivateModal } from '../store/actions/modal';
-import { clearRoute, setRoute } from '../store/actions/route';
 import { getTokenSelector } from '../store/selectors/auth';
-import { throwErrorIfErrorStatusCode } from '../utils';
+import { handleError, throwErrorIfErrorStatusCode } from '../utils';
 
 export default function GeneralSettingsScreen(props: any) {
   const dispatch = useDispatch();
   const { t } = useTranslation();
+  const isMounted = useIsMounted();
 
   useRouteTrack();
   // const route = useRoute();
@@ -49,7 +48,7 @@ export default function GeneralSettingsScreen(props: any) {
             color={Colors.red400}
             uppercase={false}
             disabled={loggingOut}
-            loading={loggingOut}
+            // loading={loggingOut}
             onPress={() => {
               dispatch(showDeactivateModal());
             }}
@@ -61,12 +60,22 @@ export default function GeneralSettingsScreen(props: any) {
             disabled={loggingOut}
             loading={loggingOut}
             onPress={() => {
+              if (loggingOut) return;
+
               setLoggingOut(true);
 
               logout(token as string)
                 .then(throwErrorIfErrorStatusCode)
                 .then(() => {
                   dispatch(logOutUser());
+                })
+                .catch(err => {
+                  handleError(err, dispatch);
+                })
+                .finally(() => {
+                  if (!isMounted.current) return;
+
+                  setLoggingOut(false);
                 });
             }}
           >{t('Logout')}</Button>

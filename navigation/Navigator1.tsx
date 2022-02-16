@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useCallback } from 'react';
 import { createStackNavigator } from "@react-navigation/stack";
 import SignInScreen from '../screens/SignInScreen';
 import SignUpScreen from '../screens/SignUpScreen';
@@ -12,24 +12,45 @@ import OnboardingScreen from '../screens/OnboardingScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
 import GalleryDialog from '../components/GalleryDialog';
 import GeneralSettingsScreen from '../screens/GeneralSettingsScreen';
-import IntroDialog from '../components/modal/IntroDialog';
 import { useDispatch, useSelector } from 'react-redux';
-import { shouldShowDeactivateModal, shouldShowIntroMessageModal, shouldShowIntroModal, shouldShowMatchModalSelector, shouldShowSearchPrefModal, shouldShowVerifyModalSelector } from '../store/selectors/modal';
-import { hideDeactivateModal, hideIntroMessageModal, hideIntroModal, hideMatchModal, hideSearchPrefModal, hideVerifyModal } from '../store/actions/modal';
+import { shouldShowDeactivateModal, shouldShowErrorModalSelector, shouldShowFeedbackModalSelector, shouldShowGameInfoModalSelector, shouldShowIntroMessageModal, shouldShowIntroModal, shouldShowMatchModalSelector, shouldShowPersonalityInfoModalSelector, shouldShowPersonalityModalSelector, shouldShowSearchPrefModal, shouldShowVerifyModalSelector } from '../store/selectors/modal';
+import { hideDeactivateModal, hideErrorModal, hideFeedbackModal, hideGameInfoModal, hideIntroMessageModal, hideIntroModal, hideMatchModal, hidePersonalityInfoModal, hidePersonalityModal, hideSearchPrefModal, hideVerifyModal } from '../store/actions/modal';
 import EncountersScreen from '../screens/EncountersScreen';
-import SearchPrefDialog from '../components/modal/SearchPrefDialog';
-import IntroMessageDialog from '../components/modal/IntroMessageDialog';
 import DeactivateDialog from '../components/modal/DeactivateDialog';
 import SettingsScreen from '../screens/SettingsScreen';
 import MatchedDialog from '../components/modal/MatchedDialog';
-import { useRoute } from '@react-navigation/native';
-import { WsContext } from '../store/WsContext';
 import VerifyDialog from '../components/modal/VerifyDialog';
 import VerificationScreen from '../screens/VerificationScreen';
+import ErrorDialog from '../components/modal/ErrorDialog';
+import FeedbackDialog from '../components/modal/FeedbackDialog';
+import GameInfoDialog from '../components/modal/GameInfoDialog';
+import PersonalityDialog from '../components/modal/PersonalityDialog';
+import BottomModal from '../components/BottomModal';
+// import ItemHeading from '../components/profileInfo/ItemHeading';
+import PersonalityInfoBottomModal from '../components/modal/PersonalityInfoBottomModal';
+import PickPersonalityScreen from '../screens/PickPersonalityScreen';
+import PersonalityQuizScreen from '../screens/PersonalityQuizScreen';
+import IntroBottomModal from '../components/modal/IntroBottomModal';
+import IntroMessageBottomModal from '../components/modal/IntroMessageBottomModal';
+import SearchPrefBottomModal from '../components/modal/SearchPrefBottomModal';
 
 const AppStack = createStackNavigator();
 const AuthStack = createStackNavigator();
 const ChatStack = createStackNavigator();
+
+// const MIntroDialog = React.memo(IntroDialog);
+const MIntroBottomModal = React.memo(IntroBottomModal);
+// const MSearchPrefDialog = React.memo(SearchPrefDialog);
+const MSearchPrefDialog = React.memo(SearchPrefBottomModal);
+// const MIntroMessageDialog = React.memo(IntroMessageDialog);
+const MIntroMessageBottomModal = React.memo(IntroMessageBottomModal);
+const MDeactivateDialog = React.memo(DeactivateDialog);
+const MMatchedDialog = React.memo(MatchedDialog);
+const MVerifyDialog = React.memo(VerifyDialog);
+const MErrorDialog = React.memo(ErrorDialog);
+const MFeedbackDialog = React.memo(FeedbackDialog);
+const MGameInfoDialog = React.memo(GameInfoDialog);
+const MPersonalityDialog = React.memo(PersonalityDialog);
 
 export const AuthScreen = () => (
   <AuthStack.Navigator>
@@ -73,42 +94,6 @@ export const ChatStackScreen = () => (
   </ChatStack.Navigator>
 );
 
-const Comp1 = ({ children }: any) => {
-  const [msg, setMsg] = useState<any>(null);
-  const { lastMessage } = useContext(WsContext);
-
-  const route = useRoute();
-  console.log('======>');
-  console.log(route.name);
-  console.log(route.params);
-  console.log(route.path);
-
-  useEffect(() => {
-    if (!lastMessage) return;
-    if (lastMessage.type !== 'msg') return;
-
-    setMsg(lastMessage);
-  }, [lastMessage]);
-
-  useEffect(() => {
-    if (!msg) return;
-    if (
-      1
-      // current screen is chat with user
-    ) {
-      // see chat message
-    }
-
-    setMsg(null);
-  }, [msg]);
-
-  return (
-    <>
-      {children}
-    </>
-  );
-}
-
 export const AppScreen = () => {
   const dispatch = useDispatch();
 
@@ -118,6 +103,23 @@ export const AppScreen = () => {
   const showDeactivateModal = useSelector(shouldShowDeactivateModal);
   const showMatchModal = useSelector(shouldShowMatchModalSelector);
   const showVerifyModal = useSelector(shouldShowVerifyModalSelector);
+  const showErrorModal = useSelector(shouldShowErrorModalSelector);
+  const showFeedbackModal = useSelector(shouldShowFeedbackModalSelector);
+  const showGameInfoModal = useSelector(shouldShowGameInfoModalSelector);
+  const showPersonalityModal = useSelector(shouldShowPersonalityModalSelector);
+  const showPersonalityInfoModal = useSelector(shouldShowPersonalityInfoModalSelector);
+
+  const hideIntroM = useCallback(() => dispatch(hideIntroModal()), []);
+  const hideSearchPrefM = useCallback(() => dispatch(hideSearchPrefModal()), []);
+  const hideIntroMessageM = useCallback(() => dispatch(hideIntroMessageModal()), []);
+  const hideDeactivateM = useCallback(() => dispatch(hideDeactivateModal()), []);
+  const hideMatchM = useCallback(() => dispatch(hideMatchModal()), []);
+  const hideVerifyM = useCallback(() => dispatch(hideVerifyModal()), []);
+  const hideErrorM = useCallback(() => dispatch(hideErrorModal()), []);
+  const hideFeedback = useCallback(() => dispatch(hideFeedbackModal()), []);
+  const hideGameInfoM = useCallback(() => dispatch(hideGameInfoModal()), []);
+  const hidePersonalityM = useCallback(() => dispatch(hidePersonalityModal()), []);
+  const hidePersonalityInfoM = useCallback(() => dispatch(hidePersonalityInfoModal()), []);
 
   return (
     <>
@@ -157,6 +159,22 @@ export const AppScreen = () => {
         <AppStack.Screen
           name="ProfileInfo"
           component={ProfileInfoScreen}
+          options={{
+            headerShown: false,
+            animationEnabled: false,
+          }}
+        />
+        <AppStack.Screen
+          name="PickPersonality"
+          component={PickPersonalityScreen}
+          options={{
+            headerShown: false,
+            animationEnabled: false,
+          }}
+        />
+        <AppStack.Screen
+          name="PersonalityQuiz"
+          component={PersonalityQuizScreen}
           options={{
             headerShown: false,
             animationEnabled: false,
@@ -220,39 +238,59 @@ export const AppScreen = () => {
         />
       </AppStack.Navigator>
 
-      <IntroDialog
+      <MIntroBottomModal
         show={showIntroModal}
-        onHide={() => dispatch(hideIntroModal())}
+        onHide={hideIntroM}
       />
 
-      <SearchPrefDialog
+      <MSearchPrefDialog
         show={showSearchPrefModal}
-        onHide={() => dispatch(hideSearchPrefModal())}
+        onHide={hideSearchPrefM}
       />
 
-      <IntroMessageDialog
+      <MIntroMessageBottomModal
         show={showIntroMessageModal}
-        onHide={() => dispatch(hideIntroMessageModal())}
+        onHide={hideIntroMessageM}
       />
 
-      <DeactivateDialog
+      <MDeactivateDialog
         show={showDeactivateModal}
-        onHide={() => dispatch(hideDeactivateModal())}
+        onHide={hideDeactivateM}
       />
 
-      {showMatchModal && (
-        <MatchedDialog
-          show={showMatchModal}
-          onHide={() => dispatch(hideMatchModal())}
-        />
-      )}
+      <MMatchedDialog
+        show={showMatchModal}
+        onHide={hideMatchM}
+      />
 
-      {showVerifyModal && (
-        <VerifyDialog
-          show={showVerifyModal}
-          onHide={() => dispatch(hideVerifyModal())}
-        />
-      )}
+      <MVerifyDialog
+        show={showVerifyModal}
+        onHide={hideVerifyM}
+      />
+
+      <MErrorDialog
+        show={showErrorModal}
+        onHide={hideErrorM}
+      />
+
+      <MFeedbackDialog
+        show={showFeedbackModal}
+        onHide={hideFeedback}
+      />
+
+      <MGameInfoDialog
+        show={showGameInfoModal}
+        onHide={hideGameInfoM}
+      />
+
+      <MPersonalityDialog
+        show={showPersonalityModal}
+        onHide={hidePersonalityM}
+      />
+
+      <BottomModal show={showPersonalityInfoModal} onHide={hidePersonalityInfoM}>
+        <PersonalityInfoBottomModal onHide={hidePersonalityInfoM}/>
+      </BottomModal>
     </>
   );
 };

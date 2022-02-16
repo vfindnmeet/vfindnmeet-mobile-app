@@ -5,3 +5,4 @@ export const getHasChatMessagesSelector = ({ chat }: any) => (chat.messages ?? [
 export const getChatLoadingSelector = ({ chat }: any) => chat.loading ?? true;
 export const getChatsSelector = ({ chat }: any) => chat.chats;
 export const getChatsLoadingSelector = ({ chat }: any) => chat.loadingChats ?? true;
+export const getWouldYouRatherQuestionsSelector = ({ chat }: any) => chat.wouldYouRatherQuestions ?? null;

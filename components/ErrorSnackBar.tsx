@@ -10,7 +10,7 @@ export default function ErrorSnackBar({ message, show, onHide }: any) {
     setVisible(show);
   }, [show]);
 
-  console.log('ErrorSnackBar visible:', visible, 'show:', show);
+  // console.log('ErrorSnackBar visible:', visible, 'show:', show);
 
   // const onToggleSnackBar = () => setVisible(!visible);
 
@@ -41,7 +41,7 @@ export default function ErrorSnackBar({ message, show, onHide }: any) {
           // alignContent: 'flex-start'
           justifyContent: 'flex-start'
         }}> */}
-          {/* <MaterialCommunityIcons name="alert-circle" size={26} color={Colors.yellowA700} /> */}
+          {/* <MaterialCommunityIcons name="alert-circle" size={ICON_SIZE} color={Colors.yellowA700} /> */}
           <Text>{message}</Text>
         {/* </View> */}
       </Snackbar>

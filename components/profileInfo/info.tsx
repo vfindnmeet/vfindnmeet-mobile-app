@@ -1,17 +1,91 @@
-import React, { useContext, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Text, View } from "react-native";
-import { Button, Divider, RadioButton, TouchableRipple } from "react-native-paper";
+import { Text, TextInput, View } from "react-native";
+import EStyleSheet from "react-native-extended-stylesheet";
+import { Button, Colors, Divider, HelperText, TouchableRipple } from "react-native-paper";
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useDispatch, useSelector } from "react-redux";
+import { ICON_SIZE, MEDIUM_ICON_SIZE } from "../../constants";
 import { useIsMounted } from "../../hooks/useIsMounted";
 import { updateProfileInfo } from "../../services/api";
 import { setProfileInfo } from "../../store/actions/profile";
 import { getTokenSelector } from "../../store/selectors/auth";
-import { arrayToOptions, getOptionItem, getOptionWithNoneItem, getSmokingOrDrinkingOptionItem, throwErrorIfErrorStatusCode } from "../../utils";
+import {
+  arrayToOptions,
+  getOptionItem,
+  getOptionWithNoneItem,
+  getSmokingOrDrinkingOptionItem,
+  handleError,
+  throwErrorIfErrorStatusCode
+} from "../../utils";
 import BottomModal from "../BottomModal";
 import EditOptions from "./EditOptions";
 import ItemHeading from "./ItemHeading";
+
+const styles = EStyleSheet.create({
+  container: {
+    marginTop: '10rem',
+    padding: '10rem',
+    backgroundColor: '#fff',
+    borderRadius: '5rem'
+  },
+  modalTitle: {
+    padding: '10rem',
+  },
+  modalButtonContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: '5rem'
+  },
+  heightInp: {
+    borderWidth: 1,
+    borderColor: Colors.black,
+    width: '70rem',
+    padding: '5rem',
+    borderRadius: '10rem'
+  },
+  infoItemContainer: {
+    padding: '5rem',
+    paddingBottom: '10rem',
+    paddingTop: '10rem'
+  },
+  infoItemInnerContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between'
+  },
+  infoItemTextContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    // justifyContent: 'flex-end',
+    alignItems: 'center',
+    width: '50%'
+  },
+  infoItemIcon: {
+    backgroundColor: Colors.grey300,
+    borderRadius: 100,
+    padding: '5rem',
+    marginRight: '5rem',
+  },
+  infoItemText: {
+    fontSize: '17rem',
+    // width: '50%'
+  },
+  infoItemSelectedContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    width: '50%'
+  },
+  infoItemSelectedText: {
+    marginRight: '5rem',
+    textAlign: 'center'
+  }
+});
+
+const isValidHeight = (height: number) => 50 <= height && height <= 300;
 
 export default function Info({ info }: any) {
   const isMounted = useIsMounted();
@@ -35,13 +109,16 @@ export default function Info({ info }: any) {
   const [drinking, setDrinking] = useState('');
   const [smoking, setSmoking] = useState('');
   const [children, setChildren] = useState('');
-  const [pets, setPets] = useState('');
-  const [personality, setPersonality] = useState('');
+  const [pet, setPet] = useState('');
+  // const [personality, setPersonality] = useState('');
   const [education, setEducation] = useState('');
   const [employment, setEmployment] = useState('');
   const [income, setIncome] = useState('');
 
   const [saving, setSaving] = useState(false);
+
+  const [heightTouched, setHeightTouched] = useState(false);
+  const [heightError, setHeightError] = useState('');
 
   // console.log('info:');
   // console.log(info);
@@ -60,6 +137,8 @@ export default function Info({ info }: any) {
   }
 
   const onInfoSave = (data: { [key: string]: any }) => {
+    if (saving) return;
+
     setSaving(true);
 
     updateProfileInfo(data, token as string)
@@ -70,55 +149,88 @@ export default function Info({ info }: any) {
         if (!isMounted.current) return;
 
         closeModals();
+        // setSaving(false);
+      })
+      .catch(err => {
+        handleError(err, dispatch);
+      })
+      .finally(() => {
+        if (!isMounted.current) return;
+
         setSaving(false);
       });
   };
 
+  const onModalHide = useCallback(() => {
+    if (saving) return;
+
+    setEditingHeight(false);
+    setEditingBody(false);
+    setEditingDrinking(false);
+    setEditingSmoking(false);
+    setEditingChildren(false);
+    setEditingPets(false);
+    setEditingPersonality(false);
+    setEditingEducation(false);
+    setEditingEmployment(false);
+    setEditingIncome(false);
+  }, [saving]);
+
+  // const info = [
+  //   { icon: 'human-male-height', label: getHeight(user.info.height) },
+  //   { icon: 'dumbbell', label: getBody(user.info.body) },
+  //   { icon: 'smoking', label: getSmoking(user.info.smoking) },
+  //   { icon: 'glass-cocktail', label: getDrinking(user.info.drinking) },
+  //   { icon: 'baby-carriage', label: getChildren(user.info.children) },
+  //   { icon: 'dog-service', label: getPet(user.info.pet) },
+  //   { icon: 'briefcase', label: getEmployment(user.info.employment) },
+  //   { icon: 'school', label: getEducation(user.info.education) },
+  //   { icon: 'account', label: getPersonality(user.info.personality) },
+  //   { icon: 'cash-multiple', label: getIncome(user.info.income) },
+  // ].filter(({ label }) => !!label);
+
   return (
     <>
-      <View style={{
-        marginTop: 10,
-        padding: 10,
-        backgroundColor: '#fff',
-        borderRadius: 5
-      }}>
+      <View style={styles.container}>
         <ItemHeading>{t('Info')}</ItemHeading>
 
-        <EditInfoItem title={t('Height')} value={info.height || t('I rather not say')} onPress={() => {
-          setHeight(info.height);
+        <EditInfoItem title={t('Height')} icon='human-male-height' value={info.height ? `${info.height} cm` : t('I rather not say')} onPress={() => {
+          setHeight(info.height ? info.height.toString() : '');
+          setHeightTouched(false);
+          setHeightError('');
           setEditingHeight(true);
         }} />
         <Divider />
-        <EditInfoItem title={t('Body')} value={t(getOptionItem(info.body))} onPress={() => {
+        <EditInfoItem title={t('Body')} icon='dumbbell' value={t(getOptionItem(info.body))} onPress={() => {
           setBody(info.body);
           setEditingBody(true);
         }} />
         <Divider />
-        <EditInfoItem title={t('Drinking')} value={t(getSmokingOrDrinkingOptionItem(info.drinking, 'drinking'))} onPress={() => {
+        <EditInfoItem title={t('Drinking')} icon='glass-cocktail' value={t(getSmokingOrDrinkingOptionItem(info.drinking, 'drinking'))} onPress={() => {
           setDrinking(info.drinking);
           setEditingDrinking(true);
         }} />
         <Divider />
-        <EditInfoItem title={t('Smoking')} value={t(getSmokingOrDrinkingOptionItem(info.smoking, 'smoking'))} onPress={() => {
+        <EditInfoItem title={t('Smoking')} icon='smoking' value={t(getSmokingOrDrinkingOptionItem(info.smoking, 'smoking'))} onPress={() => {
           setSmoking(info.smoking);
           setEditingSmoking(true);
         }} />
         <Divider />
-        <EditInfoItem title={t('Children')} value={t(getOptionItem(info.children))} onPress={() => {
+        <EditInfoItem title={t('Children')} icon='baby-carriage' value={t(getOptionItem(info.children))} onPress={() => {
           setChildren(info.children);
           setEditingChildren(true);
         }} />
         <Divider />
-        <EditInfoItem title={t('Pets')} value={t(getOptionWithNoneItem(info.pets, 'pets'))} onPress={() => {
-          setPets(info.pets);
+        <EditInfoItem title={t('Pets')} icon='dog-service' value={t(getOptionWithNoneItem(info.pet, 'pet'))} onPress={() => {
+          setPet(info.pet);
           setEditingPets(true);
         }} />
-        <Divider />
+        {/* <Divider />
         <EditInfoItem title={t('Personality')} value={t(getOptionItem(info.personality))} onPress={() => {
           setPersonality(info.personality);
           setEditingPersonality(true);
-        }} />
-        <Divider />
+        }} /> */}
+        {/* <Divider />
         <EditInfoItem title={t('Education')} value={t(getOptionWithNoneItem(info.education, 'education'))} onPress={() => {
           setEducation(info.education);
           setEditingEducation(true);
@@ -127,20 +239,62 @@ export default function Info({ info }: any) {
         <EditInfoItem title={t('Employment')} value={t(getOptionItem(info.employment))} onPress={() => {
           setEmployment(info.employment);
           setEditingEmployment(true);
-        }} />
+        }} /> */}
         <Divider />
-        <EditInfoItem title={t('Income')} value={t(getOptionWithNoneItem(info.income, 'income'))} onPress={() => {
+        <EditInfoItem title={t('Income')} icon='cash-multiple' value={t(getOptionWithNoneItem(info.income, 'income'))} onPress={() => {
           setIncome(info.income);
           setEditingIncome(true);
         }} />
       </View>
+
+      <BottomModal show={editingHeight} onHide={onModalHide}>
+        <ItemHeading style={styles.modalTitle} onHide={onModalHide} disabled={saving}>{t('Height')}</ItemHeading>
+        <View style={{
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}>
+          <TextInput
+            multiline={false}
+            maxLength={3}
+            keyboardType="numeric"
+            placeholder={t('Height')}
+            onFocus={() => setHeightTouched(true)}
+            value={height}
+            onChangeText={(text: string) => {
+              const n = +text;
+              // console.log('n=>', n,);
+              if (!isValidHeight(n)) {
+                setHeightError('Please enter a valid height');
+              } else {
+                setHeightError('');
+              }
+              setHeight(text);
+            }}
+            style={styles.heightInp}
+          ></TextInput>
+          <Text style={{ marginLeft: 5 }}>cm</Text>
+        </View>
+        <View>
+          {heightTouched && !!heightError && <HelperText type="error">{t(heightError)}</HelperText>}
+        </View>
+        <View style={styles.modalButtonContainer}>
+          <Button
+            uppercase={false}
+            loading={saving}
+            disabled={!heightTouched || !isValidHeight(+height)}
+            onPress={() => onInfoSave({ height })}
+          >{t('Save')}</Button>
+        </View>
+      </BottomModal>
 
       <BottomModal show={editingBody} onHide={() => {
         if (saving) return;
 
         setEditingBody(false)
       }}>
-        <ItemHeading>{t('Body')}</ItemHeading>
+        <ItemHeading style={styles.modalTitle} onHide={onModalHide} disabled={saving}>{t('Body')}</ItemHeading>
         <EditOptions
           selected={body}
           setSelected={setBody}
@@ -151,12 +305,7 @@ export default function Info({ info }: any) {
             ['skinny', 'Skinny'],
           ])}
         />
-        <View style={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'flex-end',
-          marginTop: 5
-        }}>
+        <View style={styles.modalButtonContainer}>
           <Button
             uppercase={false}
             loading={saving}
@@ -166,7 +315,7 @@ export default function Info({ info }: any) {
       </BottomModal>
 
       <BottomModal show={editingDrinking} onHide={() => setEditingDrinking(false)}>
-        <ItemHeading>{t('Drinking')}</ItemHeading>
+        <ItemHeading style={styles.modalTitle} onHide={onModalHide} disabled={saving}>{t('Drinking')}</ItemHeading>
         <EditOptions
           selected={drinking}
           setSelected={setDrinking}
@@ -176,12 +325,7 @@ export default function Info({ info }: any) {
             ['never', 'I don\'t drink']
           ])}
         />
-        <View style={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'flex-end',
-          marginTop: 5
-        }}>
+        <View style={styles.modalButtonContainer}>
           <Button
             uppercase={false}
             onPress={() => onInfoSave({ drinking })}
@@ -190,7 +334,7 @@ export default function Info({ info }: any) {
       </BottomModal>
 
       <BottomModal show={editingSmoking} onHide={() => setEditingSmoking(false)}>
-        <ItemHeading>{t('Smoking')}</ItemHeading>
+        <ItemHeading style={styles.modalTitle} onHide={onModalHide} disabled={saving}>{t('Smoking')}</ItemHeading>
         <EditOptions
           selected={smoking}
           setSelected={setSmoking}
@@ -200,12 +344,7 @@ export default function Info({ info }: any) {
             ['never', 'I don\'t smoke']
           ])}
         />
-        <View style={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'flex-end',
-          marginTop: 5
-        }}>
+        <View style={styles.modalButtonContainer}>
           <Button
             uppercase={false}
             onPress={() => onInfoSave({ smoking })}
@@ -214,7 +353,7 @@ export default function Info({ info }: any) {
       </BottomModal>
 
       <BottomModal show={editingChildren} onHide={() => setEditingChildren(false)}>
-        <ItemHeading>{t('Children')}</ItemHeading>
+        <ItemHeading style={styles.modalTitle} onHide={onModalHide} disabled={saving}>{t('Children')}</ItemHeading>
         <EditOptions
           selected={children}
           setSelected={setChildren}
@@ -225,12 +364,7 @@ export default function Info({ info }: any) {
             ['does_not_have_but_wants', 'Doesn\'t have children but want them']
           ])}
         />
-        <View style={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'flex-end',
-          marginTop: 5
-        }}>
+        <View style={styles.modalButtonContainer}>
           <Button
             uppercase={false}
             onPress={() => onInfoSave({ children })}
@@ -239,10 +373,10 @@ export default function Info({ info }: any) {
       </BottomModal>
 
       <BottomModal show={editingPets} onHide={() => setEditingPets(false)}>
-        <ItemHeading>{t('Pets')}</ItemHeading>
+        <ItemHeading style={styles.modalTitle} onHide={onModalHide} disabled={saving}>{t('Pets')}</ItemHeading>
         <EditOptions
-          selected={pets}
-          setSelected={setPets}
+          selected={pet}
+          setSelected={setPet}
           options={arrayToOptions([
             ['cat', 'Has cat(s)'],
             ['dog', 'Has dog(s)'],
@@ -250,21 +384,16 @@ export default function Info({ info }: any) {
             ['none', 'Doesn\'t have pets']
           ])}
         />
-        <View style={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'flex-end',
-          marginTop: 5
-        }}>
+        <View style={styles.modalButtonContainer}>
           <Button
             uppercase={false}
-            onPress={() => onInfoSave({ pets })}
+            onPress={() => onInfoSave({ pet })}
           >{t('Save')}</Button>
         </View>
       </BottomModal>
 
       <BottomModal show={editingEducation} onHide={() => setEditingEducation(false)}>
-        <ItemHeading>{t('Education')}</ItemHeading>
+        <ItemHeading style={styles.modalTitle} onHide={onModalHide} disabled={saving}>{t('Education')}</ItemHeading>
         <EditOptions
           selected={education}
           setSelected={setEducation}
@@ -275,12 +404,7 @@ export default function Info({ info }: any) {
             ['higher', 'College/University']
           ])}
         />
-        <View style={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'flex-end',
-          marginTop: 5
-        }}>
+        <View style={styles.modalButtonContainer}>
           <Button
             uppercase={false}
             onPress={() => onInfoSave({ education })}
@@ -289,7 +413,7 @@ export default function Info({ info }: any) {
       </BottomModal>
 
       <BottomModal show={editingEmployment} onHide={() => setEditingEmployment(false)}>
-        <ItemHeading>{t('Employment')}</ItemHeading>
+        <ItemHeading style={styles.modalTitle} onHide={onModalHide} disabled={saving}>{t('Employment')}</ItemHeading>
         <EditOptions
           selected={employment}
           setSelected={setEmployment}
@@ -302,12 +426,7 @@ export default function Info({ info }: any) {
             ['retired', 'Retired'],
           ])}
         />
-        <View style={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'flex-end',
-          marginTop: 5
-        }}>
+        <View style={styles.modalButtonContainer}>
           <Button
             uppercase={false}
             onPress={() => onInfoSave({ employment })}
@@ -315,7 +434,7 @@ export default function Info({ info }: any) {
         </View>
       </BottomModal>
 
-      <BottomModal show={editingPersonality} onHide={() => setEditingPersonality(false)}>
+      {/* <BottomModal show={editingPersonality} onHide={() => setEditingPersonality(false)}>
         <ItemHeading>{t('Personality')}</ItemHeading>
         <EditOptions
           selected={personality}
@@ -337,10 +456,10 @@ export default function Info({ info }: any) {
             onPress={() => onInfoSave({ personality })}
           >{t('Save')}</Button>
         </View>
-      </BottomModal>
+      </BottomModal> */}
 
       <BottomModal show={editingIncome} onHide={() => setEditingIncome(false)}>
-        <ItemHeading>{t('Income')}</ItemHeading>
+        <ItemHeading style={styles.modalTitle} onHide={onModalHide} disabled={saving}>{t('Income')}</ItemHeading>
         <EditOptions
           selected={income}
           setSelected={setIncome}
@@ -351,12 +470,7 @@ export default function Info({ info }: any) {
             ['high', 'High income']
           ])}
         />
-        <View style={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'flex-end',
-          marginTop: 5
-        }}>
+        <View style={styles.modalButtonContainer}>
           <Button
             uppercase={false}
             onPress={() => onInfoSave({ income })}
@@ -367,28 +481,22 @@ export default function Info({ info }: any) {
   );
 }
 
-function EditInfoItem({ title, value, children, onPress }: any) {
+function EditInfoItem({ title, value, icon, children, onPress }: any) {
   return (
     <TouchableRipple onPress={onPress}>
-      <View style={{
-        padding: 5,
-        paddingBottom: 10,
-        paddingTop: 10
-      }}>
-        <View style={{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}>
-          <Text style={{ fontSize: 17 }}>{title}</Text>
+      <View style={styles.infoItemContainer}>
+        <View style={styles.infoItemInnerContainer}>
+          <View style={styles.infoItemTextContainer}>
+            {!!icon && <MaterialCommunityIcons
+              name={icon}
+              size={ICON_SIZE}
+              style={styles.infoItemIcon} />}
+            <Text style={styles.infoItemText}>{title}</Text>
+          </View>
 
-          <View style={{
-            display: 'flex',
-            flexDirection: 'row',
-          }}>
-            <Text style={{ marginRight: 5 }}>{value}</Text>
-            <MaterialCommunityIcons name="pencil-outline" size={20} />
+          <View style={styles.infoItemSelectedContainer}>
+            <Text style={styles.infoItemSelectedText}>{value}</Text>
+            <MaterialCommunityIcons name="pencil-outline" size={MEDIUM_ICON_SIZE} />
           </View>
         </View>
       </View>

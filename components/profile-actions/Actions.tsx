@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import EStyleSheet from 'react-native-extended-stylesheet';
 import { useSelector } from 'react-redux';
 import { getLoggedUserIdSelector } from '../../store/selectors/auth';
 import ActionItemCont from './ActionItemCont';
@@ -7,8 +8,14 @@ import DislikeButton from './DislikeButton';
 import LikeButton from './LikeButton';
 import MessageButton from './MessageButton';
 import SendIntroButton from './SendIntroButton';
-import UnlikeButton from './UnlikeButton';
 import UnmatchButton from './UnmatchButton';
+
+const styles = EStyleSheet.create({
+  actionsContainer: {
+    // marginTop: '-35rem'
+    marginTop: -35
+  },
+});
 
 export default function Actions({ user }: any) {
   const loggedUserId = useSelector(getLoggedUserIdSelector);
@@ -21,39 +28,41 @@ export default function Actions({ user }: any) {
 
   if (user.matched) {
     return (
-      <ActionsCont>
-        <ActionItemCont>
-          <UnmatchButton userId={userId} disabled={disabled} setDisabled={setDisabled} />
+      <ActionsCont style={styles.actionsContainer}>
+        <UnmatchButton userId={userId} disabled={disabled} setDisabled={setDisabled} />
+        <MessageButton userId={userId} />
+        {/* <ActionItemCont>
         </ActionItemCont>
         <ActionItemCont>
-          <MessageButton userId={userId} />
-        </ActionItemCont>
+        </ActionItemCont> */}
       </ActionsCont>
     );
   }
 
   if (!user.like?.liked) {
     return (
-      <ActionsCont>
-        <ActionItemCont>
-          <DislikeButton userId={userId} />
+      <ActionsCont style={styles.actionsContainer}>
+        <DislikeButton userId={userId} />
+        <LikeButton userId={userId} />
+        {/* <ActionItemCont>
         </ActionItemCont>
         <ActionItemCont>
-          <LikeButton userId={userId} />
-        </ActionItemCont>
+        </ActionItemCont> */}
       </ActionsCont>
     );
   }
 
   return (
-    <ActionsCont>
-      <ActionItemCont>
-        <UnlikeButton userId={userId} />
+    <ActionsCont style={styles.actionsContainer}>
+      {/* <UnlikeButton userId={userId} /> */}
+
+      <LikeButton userId={userId} disabled={true} styles={{ backgroundColor: 'pink' }} />
+      {!user.like.introSent && <SendIntroButton user={user} />}
+      {/* {user.like.introSent && <LikeButton userId={userId} disabled={true} />} */}
+      {/* <ActionItemCont>
       </ActionItemCont>
       <ActionItemCont>
-        {!user.like.introSent && <SendIntroButton user={user} />}
-        {user.like.introSent && <LikeButton userId={userId} disabled={true} />}
-      </ActionItemCont>
+      </ActionItemCont> */}
     </ActionsCont>
   );
 }

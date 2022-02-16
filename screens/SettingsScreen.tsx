@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, ScrollView } from 'react-native';
 import CBottomTabs from '../navigation/CBottomTabs';
 import CustomProfileInfoHeader from '../navigation/CustomProfileInfoHeader';
-import { ActivityIndicator, Button, Text, TextInput } from 'react-native-paper';
-import { getSettingsInfo, updateProfile } from '../services/api';
-import { arrayToOptions, getOptionItem, getStorageItem, retryHttpRequest, setStorageItem, throwErrorIfErrorStatusCode } from '../utils';
-import { useSelector } from 'react-redux';
+import { ActivityIndicator, Button, Colors, Divider, Switch, Text, TextInput } from 'react-native-paper';
+import { getSettingsInfo, logout, setPushNotifSettings, updateProfile } from '../services/api';
+import { arrayToOptions, DEFAULT_LANG, getInterestedInOption, getLang, getOptionItem, getStorageItem, handleError, LANGUAGE_OPTIONS, retryHttpRequest, setStorageItem, throwErrorIfErrorStatusCode } from '../utils';
+import { useDispatch, useSelector } from 'react-redux';
 import ItemHeading from '../components/profileInfo/ItemHeading';
 import EditItem from '../components/profileInfo/EditItem';
 import { getProfileSelector } from '../store/selectors/profile';
@@ -17,10 +17,25 @@ import moment from 'moment';
 import EditOptions from '../components/profileInfo/EditOptions';
 import SettingsHeader from '../navigation/SettingsHeader';
 import { useTranslation } from 'react-i18next';
-import { STORAGE_LANG_KEY } from '../constants';
+import { MAIN_COLOR, STORAGE_LANG_KEY } from '../constants';
+import { showDeactivateModal } from '../store/actions/modal';
+import { logOutUser } from '../store/actions/auth';
+import PageLoader from '../components/common/PageLoader';
 
 export default function SettingsScreen(props: any) {
   const isMounted = useIsMounted();
+  const { t } = useTranslation();
+  const dispatch = useDispatch();
+
+  const [pnMessages, setPnMessages] = useState(false);
+  const [pnLikes, setPnLikes] = useState(false);
+  const [pnMatches, setPnMatches] = useState(false);
+
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [loadingLikes, setLoadingLikes] = useState(false);
+  const [loadingMatches, setLoadingMatches] = useState(false);
+
+  // const onToggleSwitch = () => setIsSwitchOn(!isSwitchOn);
 
   const token = useSelector(getTokenSelector);
   const [profile, setProfile] = useState<{
@@ -34,24 +49,39 @@ export default function SettingsScreen(props: any) {
   const [loading, setLoading] = useState(true);
   const [lang, setLang] = useState<string | null>(null);
 
+  const [loggingOut, setLoggingOut] = useState(false);
+
   useEffect(() => {
     getStorageItem(STORAGE_LANG_KEY)
       .then((lang: string | null) => {
-        setLang(lang || 'en');
+        console.log('LANG:', lang);
+        setLang(getLang(lang));
       })
   }, []);
 
   useEffect(() => {
     setLoading(true);
 
-    retryHttpRequest(getSettingsInfo.bind(null, token as string))
+    retryHttpRequest(() => {
+      if (!isMounted.current) return null;
+
+      return getSettingsInfo(token as string);
+    })
       // .then(throwErrorIfErrorStatusCode)
       .then((result: any) => result.json())
       .then(json => {
         if (!isMounted.current) return;
 
-        setProfile(json);
+        console.log(json.notif);
+
+        setProfile(json.user);
+        setPnMessages(json.notif?.messages ?? true);
+        setPnLikes(json.notif?.received_likes ?? true);
+        setPnMatches(json.notif?.matches ?? true);
         setLoading(false);
+      })
+      .catch(e => {
+        handleError(e, dispatch);
       });
   }, []);
 
@@ -61,16 +91,8 @@ export default function SettingsScreen(props: any) {
         flex: 1
       }}>
         <SettingsHeader />
-        <View style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}>
-          <ActivityIndicator size={70} />
-        </View>
-        <CBottomTabs />
+        <PageLoader />
+        {/* <CBottomTabs /> */}
       </View>
     )
   }
@@ -81,16 +103,182 @@ export default function SettingsScreen(props: any) {
     }}>
       <SettingsHeader />
       <ScrollView style={{
-        flex: 1
+        flex: 1,
+        padding: 10,
       }}>
+        <Text style={{
+          fontWeight: 'bold',
+          fontSize: 20,
+        }}>{t('Profile')}</Text>
         <Name name={profile.name} setProfile={setProfile} />
         <Birthday birthday={profile.birthday} age={profile.age} setProfile={setProfile} />
         <Gender gender={profile.gender} setProfile={setProfile} />
         <InterestedIn interestedIn={profile.interested_in} setProfile={setProfile} />
         <Language lang={lang} setLang={setLang} />
+
+        <Divider style={{
+          marginTop: 30,
+          marginBottom: 30,
+        }} />
+
+        <Text style={{
+          fontWeight: 'bold',
+          fontSize: 20,
+        }}>{t('Push notifications')}</Text>
+
+        <View style={{
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'space-between'
+        }}>
+          <View>
+            <Text style={{
+              fontSize: 20,
+              fontWeight: 'bold'
+            }}>Messages</Text>
+            <Text>When someone messages you</Text>
+          </View>
+          <Switch
+            disabled={loadingMessages}
+            value={pnMessages}
+            onValueChange={() => {
+              if (loadingMessages) return;
+
+              setLoadingMessages(true);
+
+              const v = !pnMessages;
+              setPnMessages(v);
+
+              setPushNotifSettings({ messages: v }, token)
+                .finally(() => {
+                  setLoadingMessages(false);
+                });
+            }}
+          />
+        </View>
+
+        <View style={{
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          marginTop: 10
+        }}>
+          <View>
+            <Text style={{
+              fontSize: 20,
+              fontWeight: 'bold'
+            }}>Received likes</Text>
+            <Text>When someone likes you</Text>
+          </View>
+          <Switch
+            disabled={loadingLikes}
+            value={pnLikes}
+            onValueChange={() => {
+              if (loadingLikes) return;
+
+              setLoadingLikes(true);
+
+              const v = !pnLikes;
+              setPnLikes(v);
+
+              setPushNotifSettings({ likes: v }, token)
+                .finally(() => {
+                  setLoadingLikes(false);
+                });
+            }}
+          />
+        </View>
+
+        <View style={{
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          marginTop: 10
+        }}>
+          <View>
+            <Text style={{
+              fontSize: 20,
+              fontWeight: 'bold'
+            }}>Matches</Text>
+            <Text>When you match with someone</Text>
+          </View>
+          <Switch
+            disabled={loadingMatches}
+            value={pnMatches}
+            onValueChange={() => {
+              if (loadingMatches) return;
+
+              setLoadingMatches(true);
+
+              const v = !pnMatches;
+              setPnMatches(v);
+
+              setPushNotifSettings({ matches: v }, token)
+                .finally(() => {
+                  setLoadingMatches(false);
+                });
+            }}
+          />
+        </View>
+        {/*
+        message
+        received likes
+        matches
+        */}
+
+        <Divider style={{
+          marginTop: 30,
+          marginBottom: 30,
+        }} />
+
+        <View>
+          <Button
+            mode="contained"
+            uppercase={false}
+            disabled={loggingOut}
+            loading={loggingOut}
+            // color={MAIN_COLOR}
+            labelStyle={{
+              color: Colors.white
+            }}
+            style={{
+              borderRadius: 500,
+            }}
+            onPress={() => {
+              if (loggingOut) return;
+
+              setLoggingOut(true);
+
+              logout(token as string)
+                .then(throwErrorIfErrorStatusCode)
+                .then(() => {
+                  dispatch(logOutUser());
+                })
+                .catch(err => {
+                  handleError(err, dispatch);
+                })
+                .finally(() => {
+                  if (!isMounted.current) return;
+
+                  setLoggingOut(false);
+                });
+            }}
+          >{t('Logout')}</Button>
+        </View>
+        <View>
+          <Button
+            color={Colors.grey800}
+            uppercase={false}
+            disabled={loggingOut}
+            // loading={loggingOut}
+            onPress={() => {
+              dispatch(showDeactivateModal());
+            }}
+          >{t('Deactivate')}</Button>
+        </View>
       </ScrollView>
 
-      <CBottomTabs />
+      {/* <CBottomTabs /> */}
     </View >
   );
 }
@@ -98,6 +286,7 @@ export default function SettingsScreen(props: any) {
 function Name({ name, setProfile }: any) {
   const isMounted = useIsMounted();
   const { t } = useTranslation();
+  const dispatch = useDispatch();
 
   const token = useSelector(getTokenSelector);
   const profile: any = useSelector(getProfileSelector);
@@ -106,6 +295,12 @@ function Name({ name, setProfile }: any) {
   const [editName, setEditName] = useState('');
 
   const [saving, setSaving] = useState(false);
+
+  const onHide = useCallback(() => {
+    if (saving) return;
+
+    setEditing(false);
+  }, [saving, setEditing]);
 
   return (
     <>
@@ -118,13 +313,13 @@ function Name({ name, setProfile }: any) {
         </ItemHeading>
       </EditItem>
 
-      <BottomModal show={editing} onHide={() => setEditing(false)}>
+      <BottomModal show={editing} onHide={onHide} style={{ padding: 0 }}>
         <View style={{
-          marginBottom: 15
+          // marginBottom: 15
         }}>
-          <ItemHeading>{t('What\'s your name?')}</ItemHeading>
+          <ItemHeading style={{ padding: 10 }} onHide={onHide} disabled={saving}>{t('What\'s your name?')}</ItemHeading>
           <TextInput
-            mode="outlined"
+            mode="flat"
             placeholder={t('Your name...')}
             value={editName}
             onChangeText={setEditName}
@@ -141,6 +336,8 @@ function Name({ name, setProfile }: any) {
             disabled={saving}
             loading={saving}
             onPress={() => {
+              if (saving) return;
+
               setSaving(true);
 
               updateProfile({ name: editName }, token as string)
@@ -152,8 +349,15 @@ function Name({ name, setProfile }: any) {
                     ...profile,
                     name: editName
                   });
-                  setSaving(false);
                   setEditing(false);
+                })
+                .catch(err => {
+                  handleError(err, dispatch);
+                })
+                .finally(() => {
+                  if (!isMounted.current) return;
+
+                  setSaving(false);
                 });
             }}>{t('Save')}</Button>
         </View>
@@ -165,6 +369,7 @@ function Name({ name, setProfile }: any) {
 function Birthday({ age, birthday, setProfile }: any) {
   const isMounted = useIsMounted();
   const { t } = useTranslation();
+  const dispatch = useDispatch();
 
   const token = useSelector(getTokenSelector);
   const profile: any = useSelector(getProfileSelector);
@@ -173,6 +378,12 @@ function Birthday({ age, birthday, setProfile }: any) {
   const [editBirthday, setEditBirthday] = useState('');
 
   const [saving, setSaving] = useState(false);
+
+  const onHide = useCallback(() => {
+    if (saving) return;
+
+    setEditing(false);
+  }, [saving, setEditing]);
 
   return (
     <>
@@ -186,7 +397,7 @@ function Birthday({ age, birthday, setProfile }: any) {
 
       <BottomModal show={editing} onHide={() => setEditing(false)}>
         <View>
-          <ItemHeading>{t('What\'s your birthday?')}</ItemHeading>
+          <ItemHeading style={{ padding: 10 }} onHide={onHide} disabled={saving}>{t('What\'s your birthday?')}</ItemHeading>
           <BirthdayPicker
             birthday={birthday}
             setBirthday={(newBirthday: string) => {
@@ -206,6 +417,8 @@ function Birthday({ age, birthday, setProfile }: any) {
             disabled={saving}
             loading={saving}
             onPress={() => {
+              if (saving) return;
+
               setSaving(true);
 
               updateProfile({ birthday: editBirthday }, token as string)
@@ -217,8 +430,15 @@ function Birthday({ age, birthday, setProfile }: any) {
                     ...profile,
                     birthday: editBirthday
                   });
-                  setSaving(false);
                   setEditing(false);
+                })
+                .catch(err => {
+                  handleError(err, dispatch);
+                })
+                .finally(() => {
+                  if (!isMounted.current) return;
+
+                  setSaving(false);
                 });
             }}>{t('Save')}</Button>
         </View>
@@ -230,6 +450,7 @@ function Birthday({ age, birthday, setProfile }: any) {
 function Gender({ gender, setProfile }: any) {
   const isMounted = useIsMounted();
   const { t } = useTranslation();
+  const dispatch = useDispatch();
 
   const token = useSelector(getTokenSelector);
   const profile: any = useSelector(getProfileSelector);
@@ -238,6 +459,12 @@ function Gender({ gender, setProfile }: any) {
   const [editGender, setEditGender] = useState('');
 
   const [saving, setSaving] = useState(false);
+
+  const onHide = useCallback(() => {
+    if (saving) return;
+
+    setEditing(false);
+  }, [saving, setEditing]);
 
   return (
     <>
@@ -254,7 +481,7 @@ function Gender({ gender, setProfile }: any) {
         <View style={{
           marginBottom: 15
         }}>
-          <ItemHeading>{t('What\'s your gender?')}</ItemHeading>
+          <ItemHeading style={{ padding: 10 }} onHide={onHide} disabled={saving}>{t('What\'s your gender?')}</ItemHeading>
           <EditOptions
             selected={editGender}
             setSelected={setEditGender}
@@ -276,6 +503,8 @@ function Gender({ gender, setProfile }: any) {
             disabled={saving}
             loading={saving}
             onPress={() => {
+              if (saving) return;
+
               setSaving(true);
 
               updateProfile({ gender: editGender }, token as string)
@@ -287,8 +516,15 @@ function Gender({ gender, setProfile }: any) {
                     ...profile,
                     name: editGender
                   });
-                  setSaving(false);
                   setEditing(false);
+                })
+                .catch(err => {
+                  handleError(err, dispatch);
+                })
+                .finally(() => {
+                  if (!isMounted.current) return;
+
+                  setSaving(false);
                 });
             }}>{t('Save')}</Button>
         </View>
@@ -300,6 +536,7 @@ function Gender({ gender, setProfile }: any) {
 function InterestedIn({ interestedIn, setProfile }: any) {
   const isMounted = useIsMounted();
   const { t } = useTranslation();
+  const dispatch = useDispatch();
 
   const token = useSelector(getTokenSelector);
   const profile: any = useSelector(getProfileSelector);
@@ -309,6 +546,12 @@ function InterestedIn({ interestedIn, setProfile }: any) {
 
   const [saving, setSaving] = useState(false);
 
+  const onHide = useCallback(() => {
+    if (saving) return;
+
+    setEditing(false);
+  }, [saving, setEditing]);
+
   return (
     <>
       <EditItem onPress={() => {
@@ -316,7 +559,7 @@ function InterestedIn({ interestedIn, setProfile }: any) {
         setEditing(true);
       }}>
         <ItemHeading>
-          {t('Interested in')}: <Text style={{ fontWeight: 'normal' }}>{t(getOptionItem(interestedIn))}</Text>
+          {t('Interested in')}: <Text style={{ fontWeight: 'normal' }}>{t(getInterestedInOption(interestedIn))}</Text>
         </ItemHeading>
       </EditItem>
 
@@ -324,14 +567,14 @@ function InterestedIn({ interestedIn, setProfile }: any) {
         <View style={{
           marginBottom: 15
         }}>
-          <ItemHeading>{t('What are you interested in?')}</ItemHeading>
+          <ItemHeading style={{ padding: 10 }} onHide={onHide} disabled={saving}>{t('What are you interested in?')}</ItemHeading>
           <EditOptions
             selected={editInterestedIn}
             setSelected={setEditInterestedIn}
             showDefault={false}
             options={arrayToOptions([
-              ['male', 'Male'],
-              ['female', 'Female']
+              ['male', 'Males'],
+              ['female', 'Females']
             ])}
           />
         </View>
@@ -346,6 +589,8 @@ function InterestedIn({ interestedIn, setProfile }: any) {
             disabled={saving}
             loading={saving}
             onPress={() => {
+              if (saving) return;
+
               setSaving(true);
 
               updateProfile({ interested_in: editInterestedIn }, token as string)
@@ -357,8 +602,15 @@ function InterestedIn({ interestedIn, setProfile }: any) {
                     ...profile,
                     interested_in: editInterestedIn
                   });
-                  setSaving(false);
                   setEditing(false);
+                })
+                .catch(err => {
+                  handleError(err, dispatch);
+                })
+                .finally(() => {
+                  if (!isMounted.current) return;
+
+                  setSaving(false);
                 });
             }}>{t('Save')}</Button>
         </View>
@@ -375,6 +627,12 @@ function Language({ lang, setLang }: any) {
 
   const [saving, setSaving] = useState(false);
 
+  const onHide = useCallback(() => {
+    if (saving) return;
+
+    setEditing(false);
+  }, [saving, setEditing]);
+
   return (
     <>
       <EditItem onPress={() => {
@@ -382,7 +640,7 @@ function Language({ lang, setLang }: any) {
         setEditing(true);
       }}>
         <ItemHeading>
-          {t('Language')}: <Text style={{ fontWeight: 'normal' }}>{lang}</Text>
+          {t('Language')}: <Text style={{ fontWeight: 'normal' }}>{t(LANGUAGE_OPTIONS[lang])}</Text>
         </ItemHeading>
       </EditItem>
 
@@ -390,14 +648,14 @@ function Language({ lang, setLang }: any) {
         <View style={{
           marginBottom: 15
         }}>
-          <ItemHeading>{t('Change your language')}</ItemHeading>
+          <ItemHeading style={{ padding: 10 }} onHide={onHide} disabled={saving}>{t('Change your language')}</ItemHeading>
           <EditOptions
             selected={edit}
             setSelected={setEdit}
             showDefault={false}
             options={arrayToOptions([
-              ['bg', 'Bulgarian'],
-              ['en', 'English']
+              ['bg', LANGUAGE_OPTIONS['bg']],
+              ['en', LANGUAGE_OPTIONS['en']]
             ])}
           />
         </View>

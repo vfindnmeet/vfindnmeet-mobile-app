@@ -1,4 +1,4 @@
-import { TYPE_ADD_CHAT_MESSAGE, TYPE_ADD_NOT_DELIVERED_CHAT_MESSAGE, TYPE_CLEAR_CHAT, TYPE_CLEAR_CHATS, TYPE_FETCH_CHAT, TYPE_FETCH_CHATS, TYPE_FETCH_OLDER_MESSAGES, TYPE_SEE_CHAT, TYPE_SET_CHAT, TYPE_SET_CHATS, TYPE_SET_OLDER_MESSAGES, TYPE_SYNC_CHAT_MESSAGES, TYPE_UPDATE_NOT_SEEN_CHATS } from "../actions/chat";
+import { TYPE_ADD_CHAT_MESSAGE, TYPE_ADD_NOT_DELIVERED_CHAT_MESSAGE, TYPE_CLEAR_CHAT, TYPE_CLEAR_CHATS, TYPE_FETCH_CHAT, TYPE_FETCH_CHATS, TYPE_FETCH_OLDER_MESSAGES, TYPE_MEDIA_REPORTED, TYPE_SEE_CHAT, TYPE_SET_CHAT, TYPE_SET_CHATS, TYPE_SET_OLDER_MESSAGES, TYPE_SET_WOULD_YOU_RATHER_GAME_QUESTIONS, TYPE_SYNC_CHAT_MESSAGES, TYPE_UPDATE_NOT_SEEN_CHATS } from "../actions/chat";
 
 const INITIAL_STATE: any = {};
 
@@ -26,8 +26,10 @@ export default function chatReducer(state = INITIAL_STATE, action: { type: strin
       return {
         ...state,
         messages: [
-          ...action.payload,
-          ...state.messages
+          ...state.messages,
+          ...(action.payload ?? []).reverse(),
+          // ...action.payload,
+          // ...state.messages
         ],
         loadingMessages: false
       };
@@ -51,6 +53,11 @@ export default function chatReducer(state = INITIAL_STATE, action: { type: strin
 
           return chat;
         }),
+
+
+        messages: (action.payload.messages ?? []).reverse(),
+
+
         loading: false
       };
     case TYPE_CLEAR_CHAT:
@@ -67,7 +74,7 @@ export default function chatReducer(state = INITIAL_STATE, action: { type: strin
       let chats = state.chats ?? [];
 
       // console.log('NEW MSG:');
-      // console.log(JSON.stringify(action.payload, null, 2));
+      // console.log('NEW MSG:', JSON.stringify(action.payload, null, 2));
 
       const isNewChat = chats.filter((chat: any) => chat.chatId === action.payload.chatId).length <= 0;
       // const isNewChat = chats.filter((chat: any) => chat.chatId === action.payload.chatId).length <= 0;
@@ -80,7 +87,7 @@ export default function chatReducer(state = INITIAL_STATE, action: { type: strin
       //   //   chat.notSeen
       // }));
 
-      console.log('IS NEW:', isNewChat);
+      // console.log('IS NEW:', isNewChat);
 
       if (isNewChat) {
         chats = [
@@ -98,7 +105,12 @@ export default function chatReducer(state = INITIAL_STATE, action: { type: strin
               text: action.payload.text,
               chatId: action.payload.chatId,
               userId: action.payload.userId,
-              createdAt: action.payload.createdAt
+              gameInfoId: action.payload.gameInfoId,
+              createdAt: action.payload.createdAt,
+              game: {
+                gameType: action.payload?.game?.gameType,
+                gameStage: action.payload?.game?.gameStage,
+              }
             }
           },
           ...chats
@@ -121,9 +133,21 @@ export default function chatReducer(state = INITIAL_STATE, action: { type: strin
       return {
         ...state,
         chats,
-        messages: [...(state.messages ?? []), action.payload]
+        messages: [action.payload, ...(state.messages ?? [])]
       };
     }
+    case TYPE_MEDIA_REPORTED:
+      return {
+        ...state,
+        messages: (state.messages ?? []).map((message: any) => {
+          if (message.id !== action.payload.messageId) return message;
+
+          return {
+            ...message,
+            imageReported: true
+          };
+        })
+      };
     case TYPE_ADD_NOT_DELIVERED_CHAT_MESSAGE: {
       // let chats = state.chats ?? [];
 
@@ -145,15 +169,20 @@ export default function chatReducer(state = INITIAL_STATE, action: { type: strin
       let added = false;
       const r = [];
       for (let i = messages.length - 1; i >= 0; i--) {
-        if (!added && messages[i].createdAt < action.payload.createdAt) {
-          r.push(action.payload);
-          added = true;
-        }
+        // if (!added && messages[i].createdAt < action.payload.createdAt) {
+        //   r.push(action.payload);
+        //   added = true;
+        // }
+        // if (!added && messages[i].createdAt > action.payload.createdAt) {
+        //   r.push(action.payload);
+        //   added = true;
+        // }
         r.push(messages[i]);
       }
       if (messages.length === 0) {
-        r.push(action.payload);
+        // r.push(action.payload);
       }
+      r.push(action.payload);
 
       return {
         ...state,
@@ -199,7 +228,12 @@ export default function chatReducer(state = INITIAL_STATE, action: { type: strin
             false : // !action.payload.seen :
             chat.notSeen
         }))
-      }
+      };
+    case TYPE_SET_WOULD_YOU_RATHER_GAME_QUESTIONS:
+      return {
+        ...state,
+        wouldYouRatherQuestions: action.payload
+      };
   }
 
   return state;

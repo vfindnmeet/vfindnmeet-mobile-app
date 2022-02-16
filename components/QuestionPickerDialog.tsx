@@ -1,15 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, ScrollView, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import EStyleSheet from 'react-native-extended-stylesheet';
 import { Button } from 'react-native-paper';
 
+const styles = EStyleSheet.create({
+  backdrop: {
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    flex: 1,
+    display: 'flex',
+    justifyContent: 'center',
+    padding: '10rem'
+  },
+  questionText: {
+    padding: '5rem',
+    marginBottom: '15rem',
+    fontSize: '18rem'
+  },
+  buttonsContainer: {
+    padding: '5rem'
+  }
+});
+
 export default function QuestionPickerDialog({ show, onHide, onSelected, questions }: any) {
-  // const [visible, setVisible] = useState(false);
-
-  // useEffect(() => {
-  //   setVisible(show);
-  // }, [show]);
-
   const { t } = useTranslation();
 
   return (
@@ -21,14 +34,7 @@ export default function QuestionPickerDialog({ show, onHide, onSelected, questio
         console.log('ON DISMISS');
       }}
     >
-      <View style={{
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        flex: 1,
-        display: 'flex',
-        justifyContent: 'center',
-        // position: 'relative',
-        padding: 10
-      }}>
+      <View style={styles.backdrop}>
         <View style={{
           display: 'flex',
           flex: 1,
@@ -41,11 +47,7 @@ export default function QuestionPickerDialog({ show, onHide, onSelected, questio
             {questions.map((question: any) => (
               <Text
                 key={question.questionId}
-                style={{
-                  padding: 5,
-                  marginBottom: 15,
-                  fontSize: 18
-                }}
+                style={styles.questionText}
                 onPress={() => {
                   onSelected(question);
                   onHide();
@@ -53,10 +55,8 @@ export default function QuestionPickerDialog({ show, onHide, onSelected, questio
               >{question.text}</Text>
             ))}
           </ScrollView>
-          <View style={{
-            padding: 5
-          }}>
-            <Button onPress={onHide}>{t('Cancel')}</Button>
+          <View style={styles.buttonsContainer}>
+            <Button onPress={onHide}>{t('Close')}</Button>
           </View>
         </View>
       </View>

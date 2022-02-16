@@ -5,6 +5,7 @@ import {
   Button as MatButton,
   RadioButton
 } from "react-native-paper";
+import CRadioButton from '../CRadioButton';
 
 export default function OnboardingOrientation(props: any) {
   const { t } = useTranslation();
@@ -19,7 +20,25 @@ export default function OnboardingOrientation(props: any) {
     <View>
       <Text style={{ textAlign: 'center', fontSize: 20 }}>{t('What are you interested in?')}</Text>
       <View>
-        <View style={{
+        <CRadioButton
+          value="male"
+          checked={interestedIn === 'male'}
+          onCheck={() => setInterestedIn('male')}
+          label={t('Male')}
+        ></CRadioButton>
+        <CRadioButton
+          value="female"
+          checked={interestedIn === 'female'}
+          onCheck={() => setInterestedIn('female')}
+          label={t('Female')}
+        ></CRadioButton>
+        <CRadioButton
+          value="both"
+          checked={interestedIn === 'both'}
+          onCheck={() => setInterestedIn('both')}
+          label={t('Both')}
+        ></CRadioButton>
+        {/* <View style={{
           display: 'flex',
           flexDirection: 'row',
           alignItems: 'center'
@@ -54,7 +73,7 @@ export default function OnboardingOrientation(props: any) {
             onPress={() => setInterestedIn('both')}
           />
           <Text>{t('Both')}</Text>
-        </View>
+        </View> */}
       </View>
 
       <MatButton

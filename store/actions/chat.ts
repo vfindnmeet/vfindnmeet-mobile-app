@@ -11,6 +11,32 @@ export const TYPE_ADD_NOT_DELIVERED_CHAT_MESSAGE = 'add_not_delivered_chat_messa
 export const TYPE_SEE_CHAT = 'see_chat';
 export const TYPE_SYNC_CHAT_MESSAGES = 'sync_chat_messages';
 export const TYPE_UPDATE_NOT_SEEN_CHATS = 'update_not_seen_chats';
+export const TYPE_SET_WOULD_YOU_RATHER_GAME_QUESTIONS = 'set_would_you_rather_game_questions';
+export const TYPE_MEDIA_REPORTED = 'media_reported';
+
+// export const completeQuestionGameStage1 = (questions: {
+//   [key: string]: string
+// }) => ({
+//   type: TYPE_SET_WOULD_YOU_RATHER_GAME_QUESTIONS,
+//   payload: questions
+// });
+
+export const setWouldYouRatherGameQuestions = (questions: {
+  [key: string]: {
+    [key: string]: {
+      answerId: string;
+      text: string;
+    }[]
+  }
+}) => ({
+  type: TYPE_SET_WOULD_YOU_RATHER_GAME_QUESTIONS,
+  payload: questions
+});
+
+export const reportMessageMedia = (messageId: string) => ({
+  type: TYPE_MEDIA_REPORTED,
+  payload: { messageId }
+});
 
 export function fetchOlderMessages() {
   return {
@@ -19,12 +45,10 @@ export function fetchOlderMessages() {
   };
 }
 
-export function setOlderMessages(messages: any[]) {
-  return {
-    type: TYPE_SET_OLDER_MESSAGES,
-    payload: messages
-  };
-}
+export const setOlderMessages = (messages: any[]) => ({
+  type: TYPE_SET_OLDER_MESSAGES,
+  payload: messages
+});
 
 export function fetchChats() {
   return {

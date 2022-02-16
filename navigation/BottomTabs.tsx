@@ -6,6 +6,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import ProfileInfoScreen from '../screens/ProfileInfoScreen';
 import { ChatStackScreen } from './Navigator1';
 
+const ICON_SIZE = 30; // 26;
 const Tab = createMaterialBottomTabNavigator();
 
 export default function BottomTabs() {
@@ -14,19 +15,19 @@ export default function BottomTabs() {
       <Tab.Screen name="Browse" component={BrowseScreen} options={{
         tabBarLabel: '',
         tabBarIcon: ({ color }) => (
-          <MaterialCommunityIcons name="cards" color={color} size={26} />
+          <MaterialCommunityIcons name="cards" color={color} size={ICON_SIZE} />
         ),
       }} />
       <Tab.Screen name="Likes" component={LikesScreen} options={{
         tabBarLabel: '',
         tabBarIcon: ({ color }) => (
-          <MaterialCommunityIcons name="heart" color={color} size={26} />
+          <MaterialCommunityIcons name="heart" color={color} size={ICON_SIZE} />
         ),
       }} />
       <Tab.Screen name="Messages" component={ChatStackScreen} options={
         // tabBarLabel: '',
         // tabBarIcon: ({ color }) => (
-        //   <MaterialCommunityIcons name="forum" color={color} size={26} />
+        //   <MaterialCommunityIcons name="forum" color={color} size={ICON_SIZE} />
         // ),
 
         ({ navigation }: any) => {
@@ -47,15 +48,14 @@ export default function BottomTabs() {
             title: "Explore",
             tabBarLabel: "Explore",
             tabBarIcon: ({ color }) => (
-              <MaterialCommunityIcons name="forum" color={color} size={26} />
-              // <AntDesign name="search1" color={color} size={size} />
+              <MaterialCommunityIcons name="forum" color={color} size={ICON_SIZE} />
             ),
           };
         }} />
       <Tab.Screen name="Profile" component={ProfileInfoScreen} options={{
         tabBarLabel: '',
         tabBarIcon: ({ color }) => (
-          <MaterialCommunityIcons name="account" color={color} size={26} />
+          <MaterialCommunityIcons name="account" color={color} size={ICON_SIZE} />
         ),
       }} />
     </Tab.Navigator>

@@ -31,7 +31,6 @@ export function setUser(user: any) {
 //   uri_big: string
 // }
 export function setNewProfileImage(image: any) {
-  console.log('==============================!!!!!!!', image);
   return {
     type: TYPE_SET_PROFILE_IMAGE,
     payload: image

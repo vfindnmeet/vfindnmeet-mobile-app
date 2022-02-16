@@ -81,8 +81,8 @@ const a = {
   'No info yet.': 'No info yet.', // no title
   'Verification': 'Verification', // header title
   'No users found.': 'No users found.',
-  'Matches': 'Matches',
-  'No matches found.': 'No matches found.',
+  'New Matches': 'New Matches',
+  'No new matches.': 'No new matches.',
   'Messages': 'Messages',
   'No active chats.': 'No active chats.',
   'No recommendations found.': 'No recommendations found.',

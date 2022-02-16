@@ -1,13 +1,13 @@
-import { useNavigation } from '@react-navigation/native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { IconButton } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors } from 'react-native/Libraries/NewAppScreen';
 import { useDispatch } from 'react-redux';
+import { ICON_SIZE } from '../constants';
 import { showSearchPrefModal } from '../store/actions/modal';
 import BaseHeader from './BaseHeader';
+import FeedbackButton from './FeedbackButton';
 
 export default function SearchInfoHeader(props: any) {
   const dispatch = useDispatch();
@@ -18,11 +18,12 @@ export default function SearchInfoHeader(props: any) {
       text={t('Encounters')}
       leftButton={<IconButton
         icon="tune"
-        size={26}
+        size={ICON_SIZE}
         onPress={() => {
           dispatch(showSearchPrefModal({}));
         }}
       />}
+      rightButton={<FeedbackButton />}
     />
   );
 
@@ -55,7 +56,7 @@ export default function SearchInfoHeader(props: any) {
         </View>
         <IconButton
           icon="tune"
-          size={26}
+          size={ICON_SIZE}
           onPress={() => {
             dispatch(showSearchPrefModal({}));
           }}

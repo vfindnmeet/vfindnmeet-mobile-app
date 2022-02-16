@@ -3,11 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { Modal, Text, TouchableWithoutFeedback, View } from 'react-native';
 import { ActivityIndicator, Button, TextInput } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
+import { LOADER_SIZE } from '../../constants';
 import { useIsMounted } from '../../hooks/useIsMounted';
 import { getSearchPreferences, updateSearchPreferences } from '../../services/api';
 import { setSearchPref } from '../../store/actions/searchPref';
 import { getTokenSelector } from '../../store/selectors/auth';
-import { arrayToOptions, retryHttpRequest, throwErrorIfErrorStatusCode } from '../../utils';
+import { arrayToOptions, handleError, retryHttpRequest, throwErrorIfErrorStatusCode } from '../../utils';
 import EditOptions from '../profileInfo/EditOptions';
 
 export default function SearchPrefDialog({ show, onHide }: any) {
@@ -35,12 +36,16 @@ export default function SearchPrefDialog({ show, onHide }: any) {
 
       setLoading(true);
 
-      retryHttpRequest(getSearchPreferences.bind(null, token))
+      retryHttpRequest(() => {
+        if (!isMounted.current) return null;
+
+        return getSearchPreferences(token);
+      })
         // .then(throwErrorIfErrorStatusCode)
         .then((result: any) => result.json())
         .then(result => {
-          console.log('SEARCH PREF:');
-          console.log(JSON.stringify(result, null, 2));
+          // console.log('SEARCH PREF:');
+          // console.log(JSON.stringify(result, null, 2));
           setFromAge(result.fromAge.toString());
           setToAge(result.toAge.toString());
           setDistance(result.distance.toString());
@@ -93,7 +98,7 @@ export default function SearchPrefDialog({ show, onHide }: any) {
                   alignItems: 'center',
                   padding: 15
                 }}>
-                  <ActivityIndicator size={70} />
+                  <ActivityIndicator size={LOADER_SIZE} />
                 </View>
               )}
               {!loading && (<View>
@@ -101,7 +106,7 @@ export default function SearchPrefDialog({ show, onHide }: any) {
                   fontSize: 30,
                   fontWeight: 'bold',
                   textAlign: 'center',
-                  marginBottom: 15
+                  // marginBottom: 15
                 }}>{t('Search preference')}</Text>
                 <View style={{
                   marginBottom: 10
@@ -109,7 +114,7 @@ export default function SearchPrefDialog({ show, onHide }: any) {
                   <Text style={{
                     fontSize: 20,
                     fontWeight: 'bold'
-                  }}>{t('Radius:')}</Text>
+                  }}>{t('Radius')}:</Text>
                   <TextInput
                     mode="outlined"
                     placeholder={t('Search radius in KM')}
@@ -146,7 +151,7 @@ export default function SearchPrefDialog({ show, onHide }: any) {
                     />
                   </View>
                 </View>
-                <View style={{
+                {/* <View style={{
                   marginBottom: 10
                 }}>
                   <Text style={{
@@ -162,12 +167,12 @@ export default function SearchPrefDialog({ show, onHide }: any) {
                       ['middle', 'Average income'],
                       ['high', 'High income']
                     ])}></EditOptions>
-                </View>
+                </View> */}
                 <View
                   style={{
                     display: 'flex',
                     flexDirection: 'row',
-                    justifyContent: 'flex-end',
+                    justifyContent: 'space-between',
                     marginTop: 5
                   }}
                 >
@@ -183,7 +188,10 @@ export default function SearchPrefDialog({ show, onHide }: any) {
                     disabled={saving}
                     loading={saving}
                     onPress={() => {
+                      if (saving) return;
+
                       setSaving(true);
+
                       updateSearchPreferences({
                         fromAge,
                         toAge,
@@ -202,8 +210,16 @@ export default function SearchPrefDialog({ show, onHide }: any) {
                             income
                           }));
 
-                          setSaving(false);
+                          // setSaving(false);
                           hide();
+                        })
+                        .catch(err => {
+                          handleError(err, dispatch);
+                        })
+                        .finally(() => {
+                          if (!isMounted.current) return;
+
+                          setSaving(false);
                         });
                     }}
                   >{t('Save')}</Button>

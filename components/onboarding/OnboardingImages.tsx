@@ -5,9 +5,9 @@ import {
   HelperText,
   ActivityIndicator
 } from "react-native-paper";
-import CImagePicker from '../CImagePicker';
+import OnboardingImagePicker from '../OnboardingImagePicker';
 import { getOnboardingImages } from '../../services/api';
-import { retryHttpRequest } from '../../utils';
+import { handleError, retryHttpRequest } from '../../utils';
 import { getTokenSelector } from '../../store/selectors/auth';
 import { useSelector } from 'react-redux';
 import { useIsMounted } from '../../hooks/useIsMounted';
@@ -24,12 +24,23 @@ export default function OnboardingImages(props: any) {
   const token = useSelector(getTokenSelector);
 
   const onNextStep = () => {
+    setCompleting(true);
+
     props.setImages(images);
-    props.complete();
+    props.complete()
+      .finally(() => {
+        if (!isMounted.current) return;
+
+        setCompleting(false);
+      });
   };
 
   useEffect(() => {
-    retryHttpRequest(getOnboardingImages.bind(null, token as string))
+    retryHttpRequest(() => {
+      if (!isMounted.current) return null;
+
+      return getOnboardingImages(token as string);
+    })
       .then((result: any) => result.json())
       .then(json => {
         if (!isMounted.current) return;
@@ -58,13 +69,13 @@ export default function OnboardingImages(props: any) {
   return (
     <View>
       <Text style={{ textAlign: 'center', fontSize: 20 }}>{t('Upload images')}</Text>
-      <CImagePicker
+      <OnboardingImagePicker
         images={images}
         setImages={setImages}
         setErrorMessage={props.setErrorMessage}
         setError={setError}
         allowImageChaning={!completing}
-      ></CImagePicker>
+      />
 
       <HelperText type="error" visible={!!error} >
         {t(error)}

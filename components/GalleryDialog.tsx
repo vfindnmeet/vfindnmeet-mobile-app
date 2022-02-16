@@ -1,31 +1,66 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
-import { Button, IconButton, ActivityIndicator } from 'react-native-paper';
+import { Button, IconButton, ActivityIndicator, Colors } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ImageViewer from 'react-native-image-zoom-viewer';
 import ImageMenuDialog from './ImageMenuDialog';
-import { deleteFile, setProfileImage } from '../services/api';
+import { deleteUserImage, setProfileImage } from '../services/api';
 import { useDispatch, useSelector } from 'react-redux';
 import { deleteImage } from '../store/actions/profile';
 import { useIsMounted } from '../hooks/useIsMounted';
 import { getLoggedUserIdSelector, getTokenSelector } from '../store/selectors/auth';
-import { throwErrorIfErrorStatusCode } from '../utils';
+import { handleError, throwErrorIfErrorStatusCode } from '../utils';
 import { setNewProfileImage } from '../store/actions/user';
 import { useTranslation } from 'react-i18next';
+import UnauthorizedError from '../errors/UnauthorizedError';
+import { showErrorModal } from '../store/actions/modal';
+import { ICON_SIZE } from '../constants';
+import EStyleSheet from 'react-native-extended-stylesheet';
 
-// const { width, height } = Dimensions.get("window");
+const styles = EStyleSheet.create({
+  container: {
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    // borderWidth: 4,
+    // borderColor: 'green',
+    flex: 1,
+    display: 'flex',
+    justifyContent: 'center',
+    position: 'relative'
+  },
+  closeIcon: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: '#000',
+    opacity: 0.7,
+    borderRadius: 100,
+    borderWidth: 1,
+  },
+  optionsIcon: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: Colors.black,
+    opacity: 0.7,
+    borderRadius: 100,
+    borderWidth: 1,
+  },
+  modalButton: {
+    marginTop: '15rem'
+  },
+});
 
-// export default function GalleryDialog({ show, onHide, images }: any) {
 export default function GalleryDialog({ route, navigation }: any) {
-  const isMounted = useIsMounted();
+  const { userId, images, selectedIndex } = route.params;
 
+  const isMounted = useIsMounted();
   const dispatch = useDispatch();
 
   // const [visible, setVisible] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [settingProfileImage, setSettingProfileImage] = useState(false);
-  const { userId, images, selectedIndex } = route.params;
   const [showMenu, setShowMenu] = useState(false);
+
   const [currentIndex, setCurrentIndex] = useState<number>(selectedIndex ?? 0);
   const [ix, setIx] = useState<number>(selectedIndex ?? 0);
   const [galleryImages, setGalleryImages] = useState<any[]>(images);
@@ -42,15 +77,7 @@ export default function GalleryDialog({ route, navigation }: any) {
   return (
     <>
       <SafeAreaView></SafeAreaView>
-      <View style={{
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        // borderWidth: 4,
-        // borderColor: 'green',
-        flex: 1,
-        display: 'flex',
-        justifyContent: 'center',
-        position: 'relative'
-      }}>
+      <View style={styles.container}>
         <ImageViewer
           imageUrls={galleryImages.filter(Boolean).map((image: any) => ({ url: image.uri_big }))}
           index={ix}
@@ -62,34 +89,20 @@ export default function GalleryDialog({ route, navigation }: any) {
 
         <IconButton
           icon="close"
-          size={25}
-          color={'#fff'}
+          size={ICON_SIZE}
+          color={Colors.white}
           onPress={() => navigation.goBack()}
-          style={{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            backgroundColor: '#000',
-            opacity: 0.7,
-            borderRadius: 100,
-            borderWidth: 1,
-          }}
+          style={styles.closeIcon}
         />
-        {userId === loggedUserId && (<IconButton
-          icon="dots-vertical"
-          size={25}
-          color={'#fff'}
-          onPress={() => setShowMenu(true)}
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            right: 0,
-            backgroundColor: '#000',
-            opacity: 0.7,
-            borderRadius: 100,
-            borderWidth: 1,
-          }}
-        />)}
+        {userId === loggedUserId && (
+          <IconButton
+            icon="dots-vertical"
+            size={ICON_SIZE}
+            color={Colors.white}
+            onPress={() => setShowMenu(true)}
+            style={styles.optionsIcon}
+          />
+        )}
       </View>
 
       <ImageMenuDialog show={showMenu} onHide={() => {
@@ -100,7 +113,7 @@ export default function GalleryDialog({ route, navigation }: any) {
         setShowMenu(false);
       }}>
         <Button
-          style={{ marginTop: 15 }}
+          style={styles.modalButton}
           mode="text"
           uppercase={false}
           loading={settingProfileImage}
@@ -111,6 +124,7 @@ export default function GalleryDialog({ route, navigation }: any) {
             const targetImageId = galleryImages[currentIndex].imageId;
 
             setSettingProfileImage(true);
+
             setProfileImage(targetImageId, token)
               .then(throwErrorIfErrorStatusCode)
               .then(response => response.json())
@@ -121,15 +135,29 @@ export default function GalleryDialog({ route, navigation }: any) {
 
                 if (!isMounted.current) return;
 
-                setSettingProfileImage(false);
+                // setSettingProfileImage(false);
                 setShowMenu(false);
+              })
+              // .catch((e) => {
+              //   if (e instanceof UnauthorizedError) {}
+              //   else {
+              //     dispatch(showErrorModal({ message: 'Internal server error.' }));
+              //   }
+              // })
+              .catch(err => {
+                handleError(err, dispatch);
+              })
+              .finally(() => {
+                if (!isMounted.current) return;
+
+                setSettingProfileImage(false);
               });
           }}
         >
           {t('Make profile picture')}
         </Button>
         <Button
-          style={{ marginTop: 15 }}
+          style={styles.modalButton}
           mode="text"
           loading={deleting}
           disabled={deleting || settingProfileImage}
@@ -140,8 +168,15 @@ export default function GalleryDialog({ route, navigation }: any) {
             setDeleting(true);
 
             const targetImageId = galleryImages[currentIndex].imageId;
-            deleteFile(targetImageId, token)
-              .then(() => {
+            deleteUserImage(targetImageId, token)
+              .then(throwErrorIfErrorStatusCode)
+              .then(response => response.json())
+              .then(({ errMsg }) => {
+                if (errMsg) {
+                  dispatch(showErrorModal({ message: errMsg }));
+                  return;
+                }
+
                 dispatch(deleteImage(targetImageId));
 
                 if (!isMounted.current) return;
@@ -158,11 +193,27 @@ export default function GalleryDialog({ route, navigation }: any) {
 
                 if (galleryLength - 1 === currentIndex) {
                   setIx(currentIndex - 1);
+                  setCurrentIndex(currentIndex - 1);
                 }
 
                 galleryImages.filter((image: any) => image?.imageId !== targetImageId);
-                setDeleting(false);
+                // setDeleting(false);
                 setGalleryImages(galleryImages.filter((image: any) => image?.imageId !== targetImageId));
+              })
+              // .catch((e) => {
+              //   if (e instanceof UnauthorizedError) {
+              //     // 
+              //   } else {
+              //     dispatch(showErrorModal({ message: e.message ?? 'Internal server error.' }));
+              //   }
+              // })
+              .catch(err => {
+                handleError(err, dispatch);
+              })
+              .finally(() => {
+                if (!isMounted.current) return;
+
+                setDeleting(false);
               });
 
             // dispatch(deleteImage(targetImageId));

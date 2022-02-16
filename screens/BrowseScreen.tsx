@@ -1,75 +1,111 @@
-import React, { useEffect, useState } from 'react';
-import { View } from 'react-native';
-import CustomHeader from '../navigation/CustomHeader';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Dimensions, FlatList, ScrollView, View } from 'react-native';
 import CBottomTabs from '../navigation/CBottomTabs';
 import { getNearbyUsers } from '../services/api';
 import { useDispatch, useSelector } from 'react-redux';
 import { getTokenSelector } from '../store/selectors/auth';
 import { getStorageItem, parseJson, retryHttpRequest, setStorageItem, throwErrorIfErrorStatusCode } from '../utils';
-import UserItem from '../components/UserItem';
-import InfiniteList from '../components/InfiniteList';
 import { useIsMounted } from '../hooks/useIsMounted';
 import { shouldShowBrowseOptionModalSelector } from '../store/selectors/modal';
-import { hideBrowseOptionModal, showMatchModal } from '../store/actions/modal';
-import BrowseOptionDialog from '../components/modal/BrowseOptionDialog';
+import { hideBrowseOptionModal } from '../store/actions/modal';
 import BrowseHeader from '../navigation/BrowseHeader';
-import { Text } from 'react-native-paper';
-import { useRoute } from '@react-navigation/native';
-import { clearRoute, setRoute } from '../store/actions/route';
+import { ActivityIndicator, Text } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
-import useRouteTrack from '../hooks/useRouteTrack';
-import { STORAGE_BROWSE_OPTIONS_KEY } from '../constants';
+import { LOADER_SIZE, STORAGE_BROWSE_OPTIONS_KEY } from '../constants';
+import UserItemSmall from '../components/UserItemSmall';
+import BrowseOptionBottomModal from '../components/modal/BrowseOptionBottomModal';
+import PageLoader from '../components/common/PageLoader';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function BrowseScreen(props: any) {
-  // const route = useRoute();
-  const dispatch = useDispatch();
+function useGetPopularUsers() {
+  const [users, setUsers] = useState<any[] | null>([]);
 
-  useRouteTrack();
+  // const token = useSelector(getTokenSelector);
+
   // useEffect(() => {
-  //   dispatch(setRoute({
-  //     routeName: route.name,
-  //     params: route.params
-  //   }));
+  //   retryHttpRequest(() => {
+  //     // if (!isMounted.current) return null;
 
-  //   return () => {
-  //     dispatch(clearRoute());
-  //   };
+  //     return getNearbyUsers(token, false);
+  //   })
+  //     .then((result: any) => result.json())
+  //     .then((items: any[]) => {
+  //       const r: any[] = [];
+  //       for (let i = 0; i < 15 && i < items.length; i++) {
+  //         r.push(items[i]);
+  //       }
+
+  //       console.log(r.length);
+
+  //       setUsers(r.map(i => {
+  //         const ti = { ...i };
+  //         delete ti.distanceInKm;
+
+  //         return ti;
+  //       }));
+  //     })
+
+  //   setUsers([]);
   // }, []);
 
-  // console.log('======>1');
-  // console.log(route.name);
-  // console.log(route.params);
-  // console.log(route.path);
+  return users;
+}
+
+// const MBrowseOptionDialog = React.memo(BrowseOptionDialog);
+const MBrowseOptionDialog = React.memo(BrowseOptionBottomModal);
+
+function UsersList({ users }: { users: any[] }) {
+  console.log('users list.. render');
+
+  return (
+    <FlatList
+      style={{
+        flex: 1,
+      }}
+      numColumns={3}
+      data={users}
+      renderItem={(user: any) => <UserItemSmall user={user.item} />}
+      keyExtractor={item => item.id}
+    />
+  );
+}
+
+const MUsersList = React.memo(UsersList);
+
+// const cache: any = {};
+
+// const { width } = Dimensions.get('window');
+
+let n: number;
+
+export default function BrowseScreen(props: any) {
+  const dispatch = useDispatch();
+
+  // useRouteTrack();
 
   const isMounted = useIsMounted();
   const { t } = useTranslation();
 
   const token = useSelector(getTokenSelector);
   const showBrowseOptionModal = useSelector(shouldShowBrowseOptionModalSelector);
+  const popularUsers = useGetPopularUsers();
 
-  const [page, setPage] = useState<number>(1);
+  // const [page, setPage] = useState<number>(1);
   // const [lastTs, setLastTs] = useState<number>();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [hasMore, setHasMore] = useState<boolean>(true);
+  // const [hasMore, setHasMore] = useState<boolean>(true);
   const [onlineOnly, setOnlineOnly] = useState<boolean | null>(null);
 
-  // useEffect(() => {
-  //   dispatch(showMatchModal({
-  //     me: {
-  //       id: '',
-  //       name: '',
-  //       gender: '',
-  //       profileImage: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTnvqNCzxkY_N3gC2scn1q6K7ec7y-xWZQV34oeIe9QfXiagJrzm2UEd3lKyX7ejjljHJg&usqp=CAU'
-  //     },
-  //     user: {
-  //       id: '',
-  //       name: '',
-  //       gender: '',
-  //       profileImage: ''
-  //     }
-  //   }));
-  // }, []);
+  const onDialogHide = useCallback(() => dispatch(hideBrowseOptionModal()), []);
+  const f1 = useCallback((checked: boolean) => {
+    setStorageItem(STORAGE_BROWSE_OPTIONS_KEY, JSON.stringify({ onlineOnly: checked }))
+      .then(() => {
+        if (!isMounted.current) return;
+
+        setOnlineOnly(checked);
+      });
+  }, [setOnlineOnly]);
 
   useEffect(() => {
     getStorageItem(STORAGE_BROWSE_OPTIONS_KEY)
@@ -86,42 +122,67 @@ export default function BrowseScreen(props: any) {
 
     setLoading(true);
 
-    fetchItems(1)
-      .then((items: any[]) => {
-        if (!isMounted.current) return;
+    // if (cache['k1']) {
+    //   console.log('FROM CACHE!')
+    //   setUsers(cache['k1']);
+    //   setLoading(false);
 
-        setUsers(items);
-        // if (items.length > 0) {
-        //   setLastTs(items[items.length - 1].addedAt);
-        // } else {
-        //   setHasMore(false);
-        // }
-        if (items.length <= 0) {
-          setHasMore(false);
-        }
-        setLoading(false);
-      });
-    // setPage(1);
+    //   return;
+    // }
+
+    // fetchItems(1)
+    //   .then((items: any[]) => {
+    //     // if (!isMounted.current) return;
+
+    //     // const r: any[] = [];
+    //     // for (let i = 0; i < 15 || i < items.length; i++) {
+    //     //   r.push(items[i]);
+    //     // }
+
+    //     // console.log('fetched items. Took:', Date.now() - n);
+    //     // console.log('set items ..');
+    //     // setUsers(r);
+    //     setUsers(items);
+
+    //     // cache['k1'] = items;
+    //     // if (items.length > 0) {
+    //     //   setLastTs(items[items.length - 1].addedAt);
+    //     // } else {
+    //     //   setHasMore(false);
+    //     // }
+    //     if (items.length <= 0) {
+    //       // setHasMore(false);
+    //     }
+    //     setLoading(false);
+    //   });
+    // // setPage(1);
   }, [onlineOnly]);
 
   const fetchItems = (_page: number) => {
-    // return getNearbyUsers(
-    //   token,
-    //   onlineOnly as boolean,
-    //   users[users.length - 1]?.addedAt
-    // )
-    return retryHttpRequest(getNearbyUsers.bind(null, token, onlineOnly as boolean, users[users.length - 1]?.addedAt))
-      // .then(throwErrorIfErrorStatusCode)
-      .then((result: any) => result.json())
-      // .then(result => result.users)
-      .then(result => {
-        console.log('result:', result);
-        if (result.length <= 0) {
-          setHasMore(false);
-        }
+    console.log('fetchItems');
+    return retryHttpRequest(() => {
+      if (!isMounted.current) return null;
 
-        return result;
-      });
+      return getNearbyUsers(token, onlineOnly as boolean, users[users.length - 1]?.addedAt);
+    })
+      // return getNearbyUsers(token, onlineOnly as boolean, users[users.length - 1]?.addedAt)
+      // return retryHttpRequest(getNearbyUsers.bind(null, token, onlineOnly as boolean, users[users.length - 1]?.addedAt))
+      // .then(throwErrorIfErrorStatusCode)
+      .then((r) => {
+        console.log('fetched items');
+
+        // n = Date.now();
+
+        return r;
+      })
+      .then((result: any) => result.json())
+    // .then(result => {
+    //   if (result.length <= 0) {
+    //     setHasMore(false);
+    //   }
+
+    //   return result;
+    // });
   };
 
   // const fetchItems = (page: number) => {
@@ -149,22 +210,82 @@ export default function BrowseScreen(props: any) {
   //   setPage(1);
   // }, []);
 
+  if (loading) {
+    return (
+      <SafeAreaView style={{
+        flex: 1
+      }}>
+        <BrowseHeader />
+        <PageLoader />
+        <CBottomTabs />
+      </SafeAreaView>
+    )
+  }
+
   return (
     <>
       <View style={{
         flex: 1
       }}>
         <BrowseHeader />
-        {!loading && users.length <= 0 && (
-          <Text style={{
-            padding: 10,
-            textAlign: 'center'
-          }}>{t('No users found.')}</Text>
-        )}
-        <InfiniteList
+        <View
+          style={{
+            flex: 1,
+            //   display: 'flex',
+            //   flexDirection: 'row',
+            //   flexWrap: 'wrap',
+          }}
+        >
+          {/* {(loading || !popularUsers) && (
+            <ActivityIndicator size={LOADER_SIZE} />
+          )} */}
+          {!loading && !!popularUsers && users.length > 0 && (
+            <>
+              {popularUsers.length > 0 && (
+                <View>
+                  <Text style={{
+                    fontSize: 23,
+                    fontWeight: 'bold',
+                    padding: 5,
+                    textAlign: 'center'
+                  }}>Popular people</Text>
+                  <ScrollView
+                    horizontal={true}
+                    style={{
+                      // height: 60,
+                      // flex: 2
+                      // flexShrink: 1
+                    }}
+                  >
+                    {popularUsers.map(user => <UserItemSmall key={user.id} user={user} />)}
+                  </ScrollView>
+                </View>
+              )}
+              <View style={{
+                flex: 1
+              }}>
+                {/* <Text style={{
+                  fontSize: 23,
+                  fontWeight: 'bold',
+                  padding: 5,
+                  textAlign: 'center'
+                }}>People nearby</Text> */}
+                {users.length <= 0 && (
+                  <Text style={{
+                    padding: 10,
+                    textAlign: 'center'
+                  }}>{t('No users found.')}</Text>
+                )}
+                <MUsersList users={users} />
+              </View>
+            </>
+          )}
+
+        </View>
+        {/* <InfiniteList
           onFetchItems={fetchItems}
           renderItem={(user: any) => (
-            <UserItem key={user.id} user={user} />
+            <UserItemSmall key={user.id} user={user} />
           )}
           items={users}
           setItems={(items: any[]) => {
@@ -188,22 +309,15 @@ export default function BrowseScreen(props: any) {
 
             return true;
           }}
-        />
+        /> */}
         <CBottomTabs />
       </View>
 
-      <BrowseOptionDialog
+      <MBrowseOptionDialog
         show={showBrowseOptionModal}
-        onHide={() => dispatch(hideBrowseOptionModal())}
+        onHide={onDialogHide}
         onlineOnly={onlineOnly}
-        setOnlineOnly={(checked: boolean) => {
-          setStorageItem(STORAGE_BROWSE_OPTIONS_KEY, JSON.stringify({ onlineOnly: checked }))
-            .then(() => {
-              if (!isMounted.current) return;
-
-              setOnlineOnly(checked);
-            });
-        }}
+        setOnlineOnly={f1}
       />
     </>
   );

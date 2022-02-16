@@ -1,5 +1,6 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
+import { DEFAULT_LANG } from "../utils";
 
 import bg from './translations/bg';
 import en from './translations/en';
@@ -17,7 +18,7 @@ i18n.use(initReactI18next).init({
   compatibilityJSON: 'v3',
   resources,
   //language to use if translations in user language are not available
-  fallbackLng: 'bg',
+  fallbackLng: DEFAULT_LANG,
   interpolation: {
     escapeValue: false, // not needed for react!!
   },

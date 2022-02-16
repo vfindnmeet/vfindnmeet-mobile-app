@@ -2,8 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { Button, Paragraph, Dialog, Portal, Provider } from 'react-native-paper';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { Colors } from 'react-native/Libraries/NewAppScreen';
 
 export default function ErrorDialog({ title, message, show, onHide }: any) {
   const [visible, setVisible] = useState(false);
@@ -25,7 +23,7 @@ export default function ErrorDialog({ title, message, show, onHide }: any) {
                 alignContent: 'center',
                 justifyContent: 'center'
               }}>
-                <MaterialCommunityIcons name="alert-circle" size={26} color={Colors.yellowA700} />
+                <MaterialCommunityIcons name="alert-circle" size={ICON_SIZE} color={Colors.yellowA700} />
                 <Text>{title ?? 'Error'}</Text>
               </View> */}
               <Text>{title ?? 'Error'}</Text>
@@ -34,7 +32,11 @@ export default function ErrorDialog({ title, message, show, onHide }: any) {
               <Paragraph>{message}</Paragraph>
             </Dialog.Content>
             <Dialog.Actions>
-              <Button onPress={onHide}>{t('Ok')}</Button>
+              <Button
+                mode="text"
+                uppercase={false}
+                onPress={onHide}
+              >{t('Ok')}</Button>
             </Dialog.Actions>
           </Dialog>
         </Portal>

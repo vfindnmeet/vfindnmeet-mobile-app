@@ -6,10 +6,10 @@ export const TYPE_UNLIKE_USER = 'unlike_user';
 export const TYPE_USER_INTRO_UPDATED = 'user_intro_updated';
 export const TYPE_CLEAR_LIKE_USERS = 'clear_like_users';
 
-export function fetchLikeUsers() {
+export function fetchLikeUsers(newTab?: boolean) {
   return {
     type: TYPE_FETCH_LIKE_USERS,
-    payload: {}
+    payload: { newTab }
   };
 }
 

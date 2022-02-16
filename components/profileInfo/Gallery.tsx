@@ -1,10 +1,10 @@
 import { useNavigation } from '@react-navigation/native';
-import React from 'react';
-import { Image, View } from 'react-native';
-import { TouchableRipple } from 'react-native-paper';
+import React, { useEffect } from 'react';
+import { Image, TouchableWithoutFeedback, View } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { setProfile } from '../../store/actions/profile';
 import { getProfileSelector } from '../../store/selectors/profile';
+import { requestMediaLibraryPermissions } from '../../utils';
 import SingleImagePicker from '../SingleImagePicker';
 
 export default function Gallery({ images, userId }: any) {
@@ -18,6 +18,10 @@ export default function Gallery({ images, userId }: any) {
   for (let i = 0; i < 9; i++) {
     imgs.push(images[i] ?? null);
   }
+
+  useEffect(() => {
+    requestMediaLibraryPermissions();
+  }, []);
 
   const renderImg = (image: any, imgIx: number) => {
     if (!image) {
@@ -35,12 +39,12 @@ export default function Gallery({ images, userId }: any) {
     }
 
     return (
-      <TouchableRipple onPress={() => openGallery(imgIx)} style={{
+      <TouchableWithoutFeedback onPress={() => openGallery(imgIx)} style={{
         width: '100%',
         aspectRatio: 1
       }}>
         <Image source={{ uri: image.uri_big }} style={{ width: '100%', aspectRatio: 1 }} />
-      </TouchableRipple>
+      </TouchableWithoutFeedback>
     )
   };
 

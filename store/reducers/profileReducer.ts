@@ -6,7 +6,7 @@ const INITIAL_STATE: any = {};
 export default function profileReducer(state = INITIAL_STATE, action: { type: string, payload: any }) {
   switch (action.type) {
     case TYPE_FETCH_PROFILE:
-      console.log('profileReducer', TYPE_FETCH_PROFILE);
+      // console.log('profileReducer', TYPE_FETCH_PROFILE);
       return {
         ...state,
         loading: true,
@@ -34,7 +34,7 @@ export default function profileReducer(state = INITIAL_STATE, action: { type: st
         profile: action.payload.profile
       };
     case TYPE_DELETE_IMAGE:
-      console.log('profileReducer', TYPE_DELETE_IMAGE);
+      // console.log('profileReducer', TYPE_DELETE_IMAGE);
       return {
         ...state,
         profile: state.profile ? {
@@ -43,7 +43,7 @@ export default function profileReducer(state = INITIAL_STATE, action: { type: st
         } : {}
       };
     case TYPE_SET_DESCRIPTION:
-      console.log('profileReducer', TYPE_SET_DESCRIPTION);
+      // console.log('profileReducer', TYPE_SET_DESCRIPTION);
       return {
         ...state,
         profile: state.profile ? {
@@ -63,6 +63,9 @@ export default function profileReducer(state = INITIAL_STATE, action: { type: st
         .forEach(key => {
           newState.profile.info[key] = action.payload[key];
         });
+
+      // console.log('newState:');
+      // console.log(JSON.stringify(newState, null, 2));
 
       return newState;
     case TYPE_SET_PROFILE_IMAGE:

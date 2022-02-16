@@ -1,15 +1,26 @@
-import React, { useCallback } from 'react';
-import { createMaterialBottomTabNavigator } from '@react-navigation/material-bottom-tabs';
+import React from 'react';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { View } from 'react-native';
-import { Badge, Colors, IconButton, Text } from 'react-native-paper';
+import { Dimensions, View } from 'react-native';
+import { Badge, Colors, IconButton } from 'react-native-paper';
 import { useSelector } from 'react-redux';
-import { getHasChatNotificationsSelector, getLikesCountSelector, getNotSeenChatMessagesCountSelector } from '../store/selectors/notification';
+import { getLikesCountSelector, getNotSeenChatMessagesCountSelector } from '../store/selectors/notification';
 import { maxNumber } from '../utils';
+import { BADGE_SIZE, MAIN_COLOR } from '../constants';
+// import EStyleSheet from 'react-native-extended-stylesheet';
 
-const Tab = createMaterialBottomTabNavigator();
+const { width } = Dimensions.get('screen');
+const ICON_SIZE = width / 10; //30;
 
-const getColor = (isActiveRoute: boolean) => isActiveRoute ? Colors.black : 'gray';
+// const Tab = createMaterialBottomTabNavigator();
+
+const getColor = (isActiveRoute: boolean) => isActiveRoute ? MAIN_COLOR : 'gray';
+
+// const styles = EStyleSheet.create({
+//   text: {
+//     fontSize: '1.5rem',
+//     marginHorizontal: '2rem'
+//   }
+// });
 
 export default function CBottomTabs(props: any) {
   const navigation: any = useNavigation();
@@ -28,76 +39,48 @@ export default function CBottomTabs(props: any) {
       display: 'flex',
       flexDirection: 'row',
       justifyContent: 'space-between',
-      // borderTopWidth: 1,
-      // shadowColor: "black",
-      // borderTopColor: 'gray'
 
-      // shadowRadius: 2,
+      // backgroundColor: Colors.white,
+      // shadowColor: Colors.black,
       // shadowOffset: {
       //   width: 0,
       //   height: -3,
       // },
-      // shadowColor: '#000000',
-      // elevation: 4,
       // shadowOpacity: 1.0,
-      backgroundColor: Colors.white,
-      shadowColor: Colors.black,
-      shadowOffset: {
-        width: 0,
-        height: -3,
-      },
-      shadowOpacity: 1.0,
-      shadowRadius: 4,
-      elevation: 4,
+      // shadowRadius: 4,
+      // elevation: 4,
 
-      borderTopLeftRadius: 5,
-      borderTopRightRadius: 5
+      // borderTopLeftRadius: 5,
+      // borderTopRightRadius: 5
     }}>
-      {/* <View style={{
-        // shadowRadius: 2,
-        // shadowOffset: {
-        //   width: 0,
-        //   height: -3,
-        // },
-        // shadowColor: '#000000',
-        // elevation: 4,
-        // shadowOpacity: 1.0,
-        // marginTop: 3,
-        // shadowColor: "#000",
-        // shadowOffset: {
-        //   width: 0,
-        //   height: 1,
-        // },
-        // shadowOpacity: 0.20,
-        // shadowRadius: 1.41,
-
-        // elevation: 2,
-        // zIndex: 1000
-      }}>
-        <Text>xx</Text>
-      </View> */}
       <IconButton
-        icon="map-marker"
+        icon="map-marker-outline"
         color={getColor(route.name === 'Browse')}
-        size={26}
+        size={ICON_SIZE}
         onPress={() => navigation.replace('Browse')}
       />
       <IconButton
-        icon="cards"
+        icon="cards-outline"
         color={getColor(route.name === 'Encounters')}
-        size={26}
+        size={ICON_SIZE}
         onPress={() => navigation.replace('Encounters')}
       />
+      {/* <IconButton
+        icon="flash-outline"
+        color={getColor(route.name === 'Encounters')}
+        size={ICON_SIZE}
+        onPress={() => navigation.replace('Encounters')}
+      /> */}
       <View>
         <IconButton
-          icon="heart"
+          icon="heart-outline"
           color={getColor(route.name === 'Likes')}
-          size={26}
+          size={ICON_SIZE}
           onPress={() => navigation.replace('Likes')}
         />
         <Badge
           visible={!!likesCount}
-          size={10}
+          size={BADGE_SIZE}
           style={{
             position: 'absolute',
             right: 0
@@ -106,14 +89,14 @@ export default function CBottomTabs(props: any) {
       </View>
       <View>
         <IconButton
-          icon="forum"
+          icon="forum-outline"
           color={getColor(route.name === 'ChatMessages')}
-          size={26}
+          size={ICON_SIZE}
           onPress={() => navigation.replace('Chats')}
         />
         <Badge
           visible={!!notSeenChatMessagesCount}
-          size={10}
+          size={BADGE_SIZE}
           style={{
             position: 'absolute',
             right: 0
@@ -121,15 +104,15 @@ export default function CBottomTabs(props: any) {
         >{maxNumber(notSeenChatMessagesCount, 99)}</Badge>
       </View>
       <IconButton
-        icon="account"
+        icon="account-outline"
         color={getColor(route.name === 'ProfileInfo')}
-        size={26}
+        size={ICON_SIZE}
         onPress={() => navigation.replace('ProfileInfo')}
       />
-      {/* <MaterialCommunityIcons name="cards" size={26} onPress={() => props.navigation.navigate('Chats')} />
-      <MaterialCommunityIcons name="heart" size={26} />
-      <MaterialCommunityIcons name="forum" size={26} onPress={() => props.navigation.navigate('Chats')} />
-      <MaterialCommunityIcons name="account" size={26} /> */}
+      {/* <MaterialCommunityIcons name="cards" size={ICON_SIZE} onPress={() => props.navigation.navigate('Chats')} />
+      <MaterialCommunityIcons name="heart" size={ICON_SIZE} />
+      <MaterialCommunityIcons name="forum" size={ICON_SIZE} onPress={() => props.navigation.navigate('Chats')} />
+      <MaterialCommunityIcons name="account" size={ICON_SIZE} /> */}
     </View>
   );
 }

@@ -13,7 +13,8 @@ export default function likeReducer(state = INITIAL_STATE, action: { type: strin
     case TYPE_FETCH_LIKE_USERS:
       return {
         ...state,
-        loading: true
+        loading: true,
+        users: action.payload.newTab ? [] : state.users
       };
     case TYPE_SET_LIKE_USERS:
       return {

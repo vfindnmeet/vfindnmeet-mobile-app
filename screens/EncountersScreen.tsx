@@ -1,28 +1,75 @@
-import { useRoute } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
-import { ActivityIndicator, Colors } from 'react-native-paper';
+import EStyleSheet from 'react-native-extended-stylesheet';
 import { useDispatch, useSelector } from 'react-redux';
-import ActionItemCont from '../components/profile-actions/ActionItemCont';
+import PageLoader from '../components/common/PageLoader';
 import ActionsCont from '../components/profile-actions/ActionsCont';
 import DislikeButton from '../components/profile-actions/DislikeButton';
 import LikeButton from '../components/profile-actions/LikeButton';
 import UserProfile from '../components/UserProfile';
+import { useIsMounted } from '../hooks/useIsMounted';
 import useRouteTrack from '../hooks/useRouteTrack';
+import useUserProfile from '../hooks/useUserProfile';
 import CBottomTabs from '../navigation/CBottomTabs';
 import SearchInfoHeader from '../navigation/SearchInfoHeader';
 import { getRecommendations, getSearchPreferences } from '../services/api';
 import { clearRecommendations, fetchRecommendations, setRecommendations } from '../store/actions/encounter';
-import { clearRoute, setRoute } from '../store/actions/route';
 import { getTokenSelector } from '../store/selectors/auth';
 import { getRecommendationsLoadingSelector, getRecommendationsSelector } from '../store/selectors/encounter';
 import { getSearchPrefSelector } from '../store/selectors/searchPref';
-import { retryHttpRequest, throwErrorIfErrorStatusCode } from '../utils';
+import { handleError, retryHttpRequest, throwErrorIfErrorStatusCode } from '../utils';
+
+const styles = EStyleSheet.create({
+  container: {
+    flex: 1,
+    padding: '10rem',
+  },
+  actionsContainer: {
+    justifyContent: 'space-around',
+    margin: 0,
+    // marginBottom: '-35rem',
+    marginTop: -35,
+  },
+  innerContainer: {
+    flex: 1,
+    // marginBottom: '35rem'
+  },
+});
+
+function UserProf({
+  userId,
+  distanceInKm,
+  showActions
+}: {
+  userId: string;
+  distanceInKm: number;
+  showActions: boolean;
+}) {
+  const [user, allInterests, allProfileQuestions, loading] = useUserProfile(userId);
+
+  if (loading) {
+    return (
+      <PageLoader />
+    );
+  }
+
+  return (
+    <UserProfile
+      user={user}
+      allInterests={allInterests}
+      allProfileQuestions={allProfileQuestions}
+      distanceInKm={distanceInKm}
+      showActions={false}
+    // userId={props.route.params.userId}
+    />
+  );
+}
 
 export default function EncountersScreen(props: any) {
   const dispatch = useDispatch();
   const { t } = useTranslation();
+  const isMounted = useIsMounted();
 
   useRouteTrack();
   // const route = useRoute();
@@ -44,17 +91,24 @@ export default function EncountersScreen(props: any) {
   const searchPrefereces = useSelector(getSearchPrefSelector);
 
   // console.log('searchPrefereces:', searchPrefereces);
-  const [loadingUser, setLoadingUser] = useState(true);
+  // const [loadingUser, setLoadingUser] = useState(true);
   // const [recommendations, setRecommendations] = useState<string[]>([]);
 
   const updateRecommendations = () => {
     dispatch(fetchRecommendations());
 
-    retryHttpRequest(getRecommendations.bind(null, token))
+    retryHttpRequest(() => {
+      if (!isMounted.current) return null;
+
+      return getRecommendations(token);
+    })
       // .then(throwErrorIfErrorStatusCode)
       .then((result: any) => result.json())
       .then(result => {
         dispatch(setRecommendations(result));
+      })
+      .catch(e => {
+        handleError(e, dispatch);
       });
   };
 
@@ -80,15 +134,7 @@ export default function EncountersScreen(props: any) {
         flex: 1
       }}>
         <SearchInfoHeader />
-        <View style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}>
-          <ActivityIndicator size={70} />
-        </View>
+        <PageLoader />
         <CBottomTabs />
       </View>
     );
@@ -125,42 +171,28 @@ export default function EncountersScreen(props: any) {
       flex: 1
     }}>
       <SearchInfoHeader />
-      <View style={{
-        flex: 1,
-        padding: 10,
-      }}>
-        <View style={{
-          flex: 1,
-          borderRadius: 5,
-          borderColor: '#dcdcdc',//'gray',
-          borderWidth: 1,
-          overflow: 'hidden',
-
-          backgroundColor: Colors.white,
-          shadowColor: Colors.black,
-          shadowOffset: {
-            width: 4,
-            height: 0,
-          },
-          shadowOpacity: 1.0,
-          shadowRadius: 4,
-          elevation: 14,
-        }}>
-          <UserProfile
+      <View style={styles.container}>
+        <View style={styles.innerContainer}>
+          <UserProf
+            userId={userId}
+            distanceInKm={distanceInKm}
+            showActions={false}
+          />
+          {/* <UserProfile
             userId={userId}
             distanceInKm={distanceInKm}
             showActions={false}
             setLoadingUser={setLoadingUser}
-          />
+          /> */}
 
-          {!loadingUser && (
-            <ActionsCont>
-              <ActionItemCont>
-                <DislikeButton userId={userId} />
+          {!loading && (
+            <ActionsCont style={styles.actionsContainer}>
+              <DislikeButton userId={userId} />
+              <LikeButton userId={userId} />
+              {/* <ActionItemCont>
               </ActionItemCont>
               <ActionItemCont>
-                <LikeButton userId={userId} />
-              </ActionItemCont>
+              </ActionItemCont> */}
             </ActionsCont>
           )}
         </View>

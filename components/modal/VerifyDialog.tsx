@@ -8,6 +8,8 @@ import { Camera } from 'expo-camera';
 import { manipulateAsync, FlipType, SaveFormat } from 'expo-image-manipulator';
 import { getVerifyImage } from '../DefaultImages';
 import { useTranslation } from 'react-i18next';
+import { requestCameraPermissions } from '../../utils';
+import { LOADER_SIZE } from '../../constants';
 
 export default function VerifyDialog({ show, onHide }: any) {
   const data: any = useSelector(getIntroMessageModalDataSelector);
@@ -123,9 +125,10 @@ function Verify({ gender }: any) {
 
   useEffect(() => {
     (async () => {
-      const { status }: any = await Camera.requestCameraPermissionsAsync();
-      console.log('status:', status);
-      setHasPermission(status === 'granted');
+      setHasPermission(await requestCameraPermissions());
+      // const { status }: any = await Camera.requestCameraPermissionsAsync();
+      // console.log('status:', status);
+      // setHasPermission(status === 'granted');
     })();
   }, []);
 
@@ -174,7 +177,7 @@ function Verify({ gender }: any) {
           justifyContent: 'center',
           alignItems: 'center'
         }}>
-          <ActivityIndicator size={50} />
+          <ActivityIndicator size={LOADER_SIZE} />
         </View>
       )}
 

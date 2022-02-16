@@ -9,15 +9,17 @@ import {
 } from "react-native-paper";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ErrorSnackBar from '../components/ErrorSnackBar';
-import { DEFAULT_LANG, getStorageItem, throwErrorIfErrorStatusCode } from '../utils';
+import { DEFAULT_LANG, getLang, getStorageItem, throwErrorIfErrorStatusCode } from '../utils';
 import { signUp } from '../services/api';
 import { useDispatch } from 'react-redux';
 import { setLoggedUser } from '../store/actions/auth';
 import { useTranslation } from 'react-i18next';
 import LanguageBottomModal from '../components/LanguageBottomModal';
 import { STORAGE_LANG_KEY } from '../constants';
+import { useIsMounted } from '../hooks/useIsMounted';
 
 export default function SignUpScreen({ navigation }: any) {
+  const isMounted = useIsMounted();
   const dispatch = useDispatch();
   const { t } = useTranslation();
 
@@ -44,7 +46,7 @@ export default function SignUpScreen({ navigation }: any) {
   useEffect(() => {
     getStorageItem(STORAGE_LANG_KEY)
       .then(lang => {
-        setLang(lang || DEFAULT_LANG);
+        setLang(getLang(lang));
       });
   }, []);
 
@@ -57,7 +59,10 @@ export default function SignUpScreen({ navigation }: any) {
       return;
     }
 
+    if (loading) return;
+
     setLoading(true);
+
     signUp(email, password)
       .then(throwErrorIfErrorStatusCode)
       .then(result => result.json())
@@ -73,6 +78,10 @@ export default function SignUpScreen({ navigation }: any) {
       })
       .catch(e => {
         setErrorMessage(e.message);
+        // setLoading(false);
+      })
+      .finally(() => {
+        if (!isMounted.current) return;
 
         setLoading(false);
       });
@@ -181,7 +190,14 @@ export default function SignUpScreen({ navigation }: any) {
 
       <MatButton
         disabled={loading}
-        style={{ width: '100%', marginTop: 15 }}
+        labelStyle={{
+          color: Colors.white
+        }}
+        style={{
+          width: '100%',
+          marginTop: 15,
+          borderRadius: 1000,
+        }}
         uppercase={false}
         mode="contained"
         onPress={onSignup}
@@ -195,14 +211,32 @@ export default function SignUpScreen({ navigation }: any) {
         disabled={loading}
         icon="google"
         uppercase={false}
-        style={{ width: '100%', marginTop: 15 }}
+        labelStyle={{
+          color: Colors.white
+        }}
+        style={{
+          width: '100%',
+          marginTop: 15,
+          borderRadius: 1000,
+        }}
         mode="contained"
         onPress={onSignup}
       >
         {t('Join With Google')}
       </MatButton>
 
-      <MatButton style={{ marginTop: 15 }} mode="text" uppercase={false} onPress={() => navigation.navigate('SignIn')}>
+      <MatButton
+        style={{ marginTop: 15 }}
+        mode="text"
+        disabled={loading}
+        loading={loading}
+        uppercase={false}
+        onPress={() => {
+          if (loading) return;
+
+          navigation.navigate('SignIn');
+        }}
+      >
         {t('Already have an account?')}
       </MatButton>
 

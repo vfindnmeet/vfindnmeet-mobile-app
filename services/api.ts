@@ -34,19 +34,20 @@ export const getChats = async (token: string) => {
   });
 };
 
-export const sendChatMessage = async (userId: string, {
-  // userId,
-  chatId,
-  isNew,
-  text,
-  imageId
-}: {
-  // userId: string;
-  chatId: string;
-  text?: string;
-  imageId?: string;
-  isNew: boolean;
-}, token: string) => {
+// export const sendChatMessage = async (userId: string, {
+//   // userId,
+//   chatId,
+//   isNew,
+//   text,
+//   imageId
+// }: {
+//   // userId: string;
+//   chatId: string;
+//   text?: string;
+//   imageId?: string;
+//   isNew: boolean;
+// }, token: string) => {
+export const sendChatMessage = async (userId: string, message: any, token: string) => {
   return fetch(config.API_ENDPOINT + `chat/${userId}/new-message`, {
     method: 'POST',
     headers: addAuthHeader(token, {
@@ -54,11 +55,8 @@ export const sendChatMessage = async (userId: string, {
       'Content-Type': 'application/json'
     }),
     body: JSON.stringify({
+      ...message,
       userId,
-      chatId,
-      isNew,
-      text,
-      imageId
     })
   });
 };
@@ -73,8 +71,8 @@ export const getChat = async (userId: string, token: string) => {
   });
 };
 
-export const getOlderMessages = async (userId: string, token: string) => {
-  return fetch(config.API_ENDPOINT + `chat/${userId}/older`, {
+export const getOlderMessages = async (userId: string, ts: number, token: string) => {
+  return fetch(config.API_ENDPOINT + `chat/${userId}/older` + queryParams({ t: ts }), {
     method: 'GET',
     headers: addAuthHeader(token, {
       Accept: 'application/json',
@@ -94,7 +92,7 @@ export const getOlderMessages = async (userId: string, token: string) => {
 // };
 
 export const getMessagesAfterTs = async (userId: string, after: number, token: string) => {
-  return fetch(config.API_ENDPOINT + `chat/${userId}/messages-after` + queryParams({ after}), {
+  return fetch(config.API_ENDPOINT + `chat/${userId}/messages-after` + queryParams({ after }), {
     method: 'GET',
     headers: addAuthHeader(token, {
       Accept: 'application/json',
@@ -133,14 +131,14 @@ export const getOnboardingStep = async (token: string) => {
   });
 };
 
-export const deleteFile = async (targetImageId: string, token: string) => {
+export const deleteUserImage = async (targetImageId: string, token: string) => {
   return fetch(config.API_ENDPOINT + 'users/image' + queryParams({ targetImageId }), {
     method: 'DELETE',
     headers: addAuthHeader(token)
   });
 }
 
-export const deleteFile2 = async (targetImageId: string, token: string) => {
+export const deleteImage = async (targetImageId: string, token: string) => {
   return fetch(config.API_ENDPOINT + 'image' + queryParams({ targetImageId }), {
     method: 'DELETE',
     headers: addAuthHeader(token)
@@ -171,14 +169,45 @@ export const completeOnboarding = async (token: string) => {
   });
 }
 
-export const login = async (email: string, password: string) => {
+export const login = async ({
+  email,
+  password,
+  lat,
+  lon,
+  pushToken
+}: {
+  email: string;
+  password: string;
+  lat?: number;
+  lon?: number;
+  pushToken?: string | null;
+}) => {
   return fetch(config.API_ENDPOINT + 'login', {
     method: 'POST',
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ email, password })
+    body: JSON.stringify({ email, password, lat, lon, pushToken })
+  });
+}
+
+export const setAuthInfo = async ({
+  lat,
+  lon,
+  pushToken
+}: {
+  lat?: number;
+  lon?: number;
+  pushToken?: string | null;
+}) => {
+  return fetch(config.API_ENDPOINT + 'auth-info', {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ lat, lon, pushToken })
   });
 }
 
@@ -200,7 +229,7 @@ export const logout = async (token: string) => {
   });
 }
 
-export const uploadFile = async (
+export const uploadUserImage = async (
   file: {
     uri: string;
     name: string;
@@ -227,7 +256,7 @@ export const uploadFile = async (
   });
 }
 
-export const uploadFile2 = async (
+export const uploadImage = async (
   file: {
     uri: string;
     name: string;
@@ -485,7 +514,7 @@ export const getRecommendations = async (token: string) => {
 }
 
 export const updatePosition = async (lat: number, lon: number, token: string) => {
-  console.log('SEND POSITION');
+  // console.log('SEND POSITION');
   return fetch(config.API_ENDPOINT + 'update-position', {
     method: 'POST',
     headers: addAuthHeader(token, {
@@ -496,7 +525,6 @@ export const updatePosition = async (lat: number, lon: number, token: string) =>
 }
 
 export const deactivate = async (password: string, token: string) => {
-  // console.log('SEND POSITION');
   return fetch(config.API_ENDPOINT + 'settings/deactivate', {
     method: 'POST',
     headers: addAuthHeader(token, {
@@ -522,5 +550,92 @@ export const registerPushNotificationToken = async (pushToken: string, token: st
       'Content-Type': 'application/json'
     }),
     body: JSON.stringify({ token: pushToken })
+  });
+}
+
+export const getWouldYouRatherQuestions = async () => {
+  return fetch(config.API_ENDPOINT + 'would-you-rather-questions', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+}
+
+export const getQuestionGameQuestions = async () => {
+  return fetch(config.API_ENDPOINT + 'question-game-questions', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+}
+
+export const reportMedia = async (messageId: string, token: string) => {
+  return fetch(config.API_ENDPOINT + 'report-media', {
+    method: 'POST',
+    headers: addAuthHeader(token, {
+      'Content-Type': 'application/json'
+    }),
+    body: JSON.stringify({ messageId })
+  });
+}
+
+export const addFeedback = async (type: string, details: string, token: string) => {
+  return fetch(config.API_ENDPOINT + 'add-feedback', {
+    method: 'POST',
+    headers: addAuthHeader(token, {
+      'Content-Type': 'application/json'
+    }),
+    body: JSON.stringify({ type, details })
+  });
+}
+
+export const getPersonalityQuestions = async () => {
+  return fetch(config.API_ENDPOINT + 'personality-questions', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+}
+
+export const calculatePersonality = async (answers: { [key: number]: number; }, token: string) => {
+  console.log(JSON.stringify({ answers }));
+
+  return fetch(config.API_ENDPOINT + 'personality-calculate', {
+    method: 'POST',
+    headers: addAuthHeader(token, {
+      'Content-Type': 'application/json'
+    }),
+    body: JSON.stringify({ answers })
+  });
+}
+
+export const getPersonality = async (token: string) => {
+  return fetch(config.API_ENDPOINT + 'personality', {
+    method: 'GET',
+    headers: addAuthHeader(token, {
+      'Content-Type': 'application/json'
+    }),
+  });
+}
+
+export const setPersonality = async (personality: string, token: string) => {
+  return fetch(config.API_ENDPOINT + 'personality', {
+    method: 'POST',
+    headers: addAuthHeader(token, {
+      'Content-Type': 'application/json'
+    }),
+    body: JSON.stringify({ personality })
+  });
+}
+export const setPushNotifSettings = async (data: { messages?: boolean; likes?: boolean; matches?: boolean }, token: string) => {
+  return fetch(config.API_ENDPOINT + 'push-notif-settings', {
+    method: 'POST',
+    headers: addAuthHeader(token, {
+      'Content-Type': 'application/json'
+    }),
+    body: JSON.stringify(data)
   });
 }

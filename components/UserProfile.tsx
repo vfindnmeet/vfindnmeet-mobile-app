@@ -1,28 +1,147 @@
-import React, { useEffect, useState } from 'react';
-import { Dimensions, FlatList, Image, ScrollView, Text, TouchableWithoutFeedback, View } from 'react-native';
-import { ActivityIndicator, Button, Chip, Colors, Divider } from 'react-native-paper';
-import { useDispatch, useSelector } from 'react-redux';
-import { getInterests, getProfileQuestions, getUserProfile } from '../services/api';
-import { setAllInterests, setAllProfileQuestions } from '../store/actions/common';
-import { clearUser, fetchUser, setUser } from '../store/actions/user';
-import { getLoggedUserIdSelector, getTokenSelector } from '../store/selectors/auth';
-import { getUserLoadingSelector, getUserSelector } from '../store/selectors/user';
-import { isVerified, retryHttpRequest, throwErrorIfErrorStatusCode } from '../utils';
-import EditItem from './profileInfo/EditItem';
+import React, { useState } from 'react';
+import { Dimensions, Image, ScrollView, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { Button, Colors, Divider } from 'react-native-paper';
+import { isVerified } from '../utils';
 import ItemHeading from './profileInfo/ItemHeading';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
-import { useIsMounted } from '../hooks/useIsMounted';
-import UnmatchButton from './profile-actions/UnmatchButton';
-import MessageButton from './profile-actions/MessageButton';
 import Actions from './profile-actions/Actions';
-import { getDefaultImage } from './DefaultImages';
 import DefaultImage from './DefaultImage';
 import OnlineBadge from './OnlineBadge';
 import VerifiedBadge from './VerifiedBadge';
 import { useTranslation } from 'react-i18next';
+import PersonalityBadge from './common/personality/PersonalityBadge';
+import { ICON_SIZE, MAIN_COLOR } from '../constants';
+import EStyleSheet from 'react-native-extended-stylesheet';
+import { LinearGradient } from 'expo-linear-gradient';
 
-const { width, height } = Dimensions.get('window');
+const styles = EStyleSheet.create({
+  heading: {
+    marginBottom: '5rem',
+  },
+  personalityBadge: {
+    position: 'absolute',
+    top: '5rem',
+    left: '5rem',
+  },
+  userInfoContainer: {
+    padding: '10rem',
+    borderBottomLeftRadius: '5rem',
+    borderBottomRightRadius: '5rem',
+    backgroundColor: Colors.white,
+  },
+  descriptionContainer: {
+    marginTop: '10rem'
+  },
+  nameText: {
+    fontWeight: 'bold',
+    fontSize: '30rem'
+  },
+  ageText: {
+    fontSize: '30rem',
+    marginLeft: '5rem'
+  },
+  questionText: {
+    fontSize: '18rem',
+    fontWeight: '700'
+  },
+  answerText: {
+    fontSize: '15rem'
+  },
+  infoItemContainer: {
+    margin: '3rem',
+    padding: '5rem',
+    paddingLeft: '10rem',
+    paddingRight: '10rem',
+    borderRadius: '15rem',
+
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center'
+  },
+  infoItemIcon: {
+    backgroundColor: Colors.grey300,
+    borderRadius: 100,
+    padding: '5rem',
+    marginRight: '5rem',
+  },
+  sectionContainer: {
+    marginTop: '10rem',
+    padding: '5rem',
+    borderRadius: '5rem',
+    backgroundColor: Colors.white,
+  },
+  imageSectionContainer: {
+    marginTop: '10rem',
+  },
+  answerDivider: {
+    marginTop: '10rem',
+    marginBottom: '10rem',
+  },
+  questionContainer: {
+    marginBottom: '5rem'
+  },
+  interestItem: {
+    margin: '3rem',
+    padding: '5rem',
+    paddingLeft: '15rem',
+    paddingRight: '15rem',
+    borderRadius: '15rem',
+  },
+  marginLeft: {
+    marginLeft: '5rem',
+  },
+  container: {
+    flex: 1,
+  },
+  userInfoTextContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+  userTitleContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  userTitleText: {
+    marginLeft: '5rem',
+  },
+  infoItemCont: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+  },
+  infoItemText: {
+    fontWeight: 'bold',
+  },
+  interestsContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap'
+  },
+  // distanceInKm: {
+  //   marginTop: '5rem'
+  // },
+  gradientContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+  },
+  gradientCont: {
+    position: 'absolute',
+    bottom: '35rem',
+    left: '10rem',
+  }
+});
+
+const { width } = Dimensions.get('screen');
+export const IMAGE_SIZE = width / 2;
+
+const getHeight = (height: number) => height ? `${height} cm` : null;
 
 const getBody = (value: string) => {
   switch (value) {
@@ -113,228 +232,288 @@ const getIncome = (value: string) => {
   }
 };
 
-export default function UserProfile({ userId, showActions, distanceInKm, setLoadingUser }: {
-  userId: string;
+function Img({ ix, images }: any) {
+  if (!images[ix]) return null;
+
+  return (
+    <View style={styles.imageSectionContainer}>
+      <TouchableWithoutFeedback
+        key={images[ix].imageId}
+        style={{
+          // width
+          // paddingTop: 15,
+          width: '100%',
+          // aspectRatio: 1
+          // width: galleryWidth
+        }}
+        onPress={() => {
+          // openGallery(ix);
+        }}
+      >
+        <Image
+          style={{
+            // width,
+
+            width: '100%',
+            aspectRatio: 1
+            // width: galleryWidth,
+            // height: galleryH
+          }}
+          source={{ uri: images[ix].uri_big }}
+        />
+      </TouchableWithoutFeedback>
+    </View>
+  );
+}
+
+export default function UserProfile({
+  // userId,
+  user,
+  allInterests,
+  allProfileQuestions,
+  showActions,
+  distanceInKm,
+  // setLoadingUser
+}: {
+  user: any,
+  allInterests: any[],
+  allProfileQuestions: any[],
+  // userId: string;
   showActions: boolean;
   distanceInKm?: number;
-  setLoadingUser?: (loading: boolean) => void;
+  // setLoadingUser?: (loading: boolean) => void;
 }) {
-  const dispatch = useDispatch();
-  const isMounted = useIsMounted();
   const navigation: any = useNavigation();
   const { t } = useTranslation();
-
-  const user: any = useSelector(getUserSelector);
-  const loading: boolean = useSelector(getUserLoadingSelector);
-  const token = useSelector(getTokenSelector);
-  const loggedUserId = useSelector(getLoggedUserIdSelector);
-
-  const allInterests: any = useSelector(({ common }: any) => common.interests);
-  const allProfileQuestions: any = useSelector(({ common }: any) => common.profileQuestions);
-
-  useEffect(() => {
-    setLoadingUser && setLoadingUser(loading);
-  }, [loading]);
-
-  useEffect(() => {
-    if (allInterests) {
-      return;
-    }
-
-    retryHttpRequest(getInterests.bind(null, token as string))
-      // .then(throwErrorIfErrorStatusCode)
-      .then((result: any) => result.json())
-      .then(interests => {
-        dispatch(setAllInterests(interests));
-      })
-  }, []);
-
-  useEffect(() => {
-    if (allProfileQuestions) {
-      return;
-    }
-
-    retryHttpRequest(getProfileQuestions.bind(null, token as string))
-      // .then(throwErrorIfErrorStatusCode)
-      .then((result: any) => result.json())
-      .then(allProfileQuestions => {
-        dispatch(setAllProfileQuestions(allProfileQuestions));
-      })
-  }, []);
-
-  useEffect(() => {
-    dispatch(fetchUser());
-
-    retryHttpRequest(getUserProfile.bind(null, userId, token))
-      // .then(throwErrorIfErrorStatusCode)
-      .then((result: any) => result.json())
-      .then(result => {
-        if (!isMounted.current) return;
-
-        dispatch(setUser(result));
-        // setTimeout(() => {
-        // }, 1500);
-      });
-
-    return () => {
-      dispatch(clearUser());
-    };
-  }, [userId]);
-
-  if (loading || !allInterests || !allProfileQuestions) {
-    return (
-      <View style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center'
-      }}>
-        <ActivityIndicator size={70} />
-      </View>
-    );
-  }
 
   const openGallery = (selectedIndex: number) => navigation.navigate('GalleryDialog', {
     images: user.images,
     selectedIndex
   });
+  const [galleryWidth, setGalleryWidth] = useState<number | undefined>();
+  const [galleryH, setGalleryH] = useState<number | undefined>();
 
   const info = [
-    { icon: 'human-male-height', label: user.info.height },
-    { icon: 'dumbbell', label: getBody(user.info.body) },
-    { icon: 'smoking', label: getSmoking(user.info.smoking) },
-    { icon: 'glass-cocktail', label: getDrinking(user.info.drinking) },
-    { icon: 'baby-carriage', label: getChildren(user.info.children) },
-    { icon: 'dog-service', label: getPet(user.info.pet) },
-    { icon: 'briefcase', label: getEmployment(user.info.employment) },
-    { icon: 'school', label: getEducation(user.info.education) },
-    { icon: 'account', label: getPersonality(user.info.personality) },
-    { icon: 'cash-multiple', label: getIncome(user.info.income) },
+    { icon: 'human-male-height', title: 'Height', label: getHeight(user.info.height) },
+    { icon: 'dumbbell', title: 'Body', label: getBody(user.info.body) },
+    { icon: 'smoking', title: 'Smoking', label: getSmoking(user.info.smoking) },
+    { icon: 'glass-cocktail', title: 'Drinking', label: getDrinking(user.info.drinking) },
+    { icon: 'baby-carriage', title: 'Children', label: getChildren(user.info.children) },
+    { icon: 'dog-service', title: 'Pets', label: getPet(user.info.pet) },
+    { icon: 'briefcase', title: 'Work', label: getEmployment(user.info.employment) },
+    { icon: 'school', title: 'Education', label: getEducation(user.info.education) },
+    { icon: 'account', title: 'Personality', label: getPersonality(user.info.personality) },
+    { icon: 'cash-multiple', title: 'Income', label: getIncome(user.info.income) },
   ].filter(({ label }) => !!label);
 
   return (
     <>
-      <ScrollView style={{
-        flex: 1,
-        backgroundColor: '#fff',
-      }}>
-        {user.images.length > 0 && (
+      <ScrollView style={styles.container}
+        onLayout={(e) => {
+          const { height } = e.nativeEvent.layout;
+          console.log('height', height);
+          setGalleryH(height);
+        }}
+      >
+        {/* {user.images.length > 0 && (
           <ScrollView
-            style={{ flex: 1 }}
+            style={styles.container}
             horizontal={true}
-            snapToInterval={width}
+            // snapToInterval={width}
+            snapToInterval={galleryWidth}
+            onLayout={(e) => {
+              const { width } = e.nativeEvent.layout;
+              // console.log('width', width);
+              setGalleryWidth(width);
+            }}
           >
             {user.images.map((image: any, ix: number) => (
               <TouchableWithoutFeedback
                 key={image.imageId}
-                style={{ width }}
+                style={{
+                  // width
+                  width: galleryWidth
+                }}
                 onPress={() => {
                   openGallery(ix);
                 }}
               >
                 <Image
-                  style={{ width, aspectRatio: 1 }}
-                  // resizeMode="contain"
+                  style={{
+                    // width,
+                    // aspectRatio: 1,
+                    width: galleryWidth,
+                    height: galleryH
+                  }}
                   source={{ uri: image.uri_big }}
                 />
               </TouchableWithoutFeedback>
             ))}
           </ScrollView>
+        )} */}
+        {user.images.length > 0 && (
+          <View>
+            <ScrollView
+              style={styles.container}
+              horizontal={true}
+              // snapToInterval={width}
+              snapToInterval={galleryWidth}
+              onLayout={(e) => {
+                const { width } = e.nativeEvent.layout;
+                // console.log('width', width);
+                setGalleryWidth(width);
+              }}
+            >
+              {user.images.map((image: any, ix: number) => (
+                <TouchableWithoutFeedback
+                  key={image.imageId}
+                  style={{
+                    // width
+                    width: galleryWidth
+                  }}
+                  onPress={() => {
+                    openGallery(ix);
+                  }}
+                >
+                  <View>
+
+                    <Image
+                      style={{
+                        // width,
+                        // aspectRatio: 1,
+                        width: galleryWidth,
+                        height: galleryH
+                      }}
+                      source={{ uri: image.uri_big }}
+                    />
+
+                    <LinearGradient
+                      colors={['transparent', 'transparent', 'transparent', 'rgba(0, 0, 0, 0.5)']}
+                      style={[styles.contRadius, styles.gradientContainer]}
+                    >
+                      <View style={styles.gradientCont}>
+                        <View style={styles.userInfoTextContainer}>
+                          <Text style={[styles.nameText, { color: Colors.white }]}>{user.name}</Text>
+                          <Text style={[styles.ageText, { color: Colors.white }]}>{user.age}</Text>
+                          {user.isOnline && <OnlineBadge style={styles.marginLeft} />}
+                          {isVerified(user.verification_status) && <VerifiedBadge style={styles.marginLeft} />}
+                        </View>
+                        {!!distanceInKm && (
+                          <Text style={[styles.distanceInKm, { color: Colors.white }]}><MaterialCommunityIcons name="map-marker-outline" /> {distanceInKm} {t('km away')}</Text>
+                        )}
+                      </View>
+                    </LinearGradient>
+                  </View>
+                </TouchableWithoutFeedback>
+              ))}
+            </ScrollView>
+
+            {/* <LinearGradient
+              colors={['transparent', 'transparent', 'transparent', 'rgba(0, 0, 0, 0.4)']}
+              style={[styles.contRadius, styles.gradientContainer]}
+            >
+              <View style={{
+                position: 'absolute',
+                bottom: 35,
+                left: 10,
+              }}>
+                <View style={styles.userInfoTextContainer}>
+                  <Text style={[styles.nameText, { color: Colors.white }]}>{user.name}</Text>
+                  <Text style={[styles.ageText, { color: Colors.white }]}>{user.age}</Text>
+                  {user.isOnline && <OnlineBadge style={styles.marginLeft} />}
+                  {isVerified(user.verification_status) && <VerifiedBadge style={styles.marginLeft} />}
+                </View>
+                {!!distanceInKm && (
+                  <Text style={[styles.distanceInKm, { color: Colors.white }]}><MaterialCommunityIcons name="map-marker-outline" /> {distanceInKm} {t('km away')}</Text>
+                )}
+              </View>
+            </LinearGradient> */}
+          </View>
+        )}
+        {user.personality && (
+          <PersonalityBadge
+            personality={user.personality}
+            style={styles.personalityBadge}
+          />
         )}
 
         {user.images.length <= 0 && (<DefaultImage gender={user.gender} />)}
 
-        <View
-          style={{
-            padding: 10
-          }}
-        >
-          <View style={{
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center'
-          }}>
-            <Text style={{ fontWeight: 'bold', fontSize: 30, }}>{user.name}</Text>
-            <Text style={{ fontSize: 30, marginLeft: 5 }}>{user.age}</Text>
-            {user.isOnline && <OnlineBadge style={{ marginLeft: 5 }} />}
-            {isVerified(user.verification_status) && <VerifiedBadge style={{ marginLeft: 5 }} />}
+        <View>
+          <View style={styles.userInfoContainer}>
+            {/* <View style={styles.userInfoTextContainer}>
+              <Text style={styles.nameText}>{user.name}</Text>
+              <Text style={styles.ageText}>{user.age}</Text>
+              {user.isOnline && <OnlineBadge style={styles.marginLeft} />}
+              {isVerified(user.verification_status) && <VerifiedBadge style={styles.marginLeft} />}
+            </View> */}
+            {user.work && (
+              <View style={styles.userTitleContainer}>
+                <MaterialCommunityIcons name="briefcase" />
+                <Text style={[styles.userTitleText, styles.marginLeft]}>{user.work}</Text>
+              </View>
+            )}
+            {user.education && (
+              <View style={styles.userTitleContainer}>
+                <MaterialCommunityIcons name="school" />
+                <Text style={[styles.userTitleText, styles.marginLeft]}>{user.education}</Text>
+              </View>
+            )}
+
+            {/* {!!distanceInKm && (
+              <Text style={styles.distanceInKm}><MaterialCommunityIcons name="map-marker-outline" /> {distanceInKm} {t('km away')}</Text>
+            )} */}
+
+            {user.description && (
+              <View style={styles.descriptionContainer}>
+                <ProfileItemHeading>{t('About')}</ProfileItemHeading>
+
+                <Text>{user.description}</Text>
+              </View>
+            )}
           </View>
-          {!!distanceInKm && (<Text>{distanceInKm} {t('km away')}</Text>)}
-          {user.title && <Text>{user.title}</Text>}
-
-          {user.description && (
-            <View style={{
-              marginTop: 10
-            }}>
-              <ProfileItemHeading>{t('About')}</ProfileItemHeading>
-
-              <Text>{user.description}</Text>
-            </View>
-          )}
 
           {info.length > 0 && (
-            <View style={{
-              marginTop: 10
-            }}>
+            <View style={styles.sectionContainer}>
               <ProfileItemHeading>{t('Info')}</ProfileItemHeading>
 
-              <View
-                style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  justifyContent: 'flex-start',
-                  flexWrap: 'wrap'
-                }}
+              <ScrollView
+                horizontal={true}
               >
-                {info.map(({ icon, label }) => (
+                {info.map(({ icon, label, title }: any) => (
                   <View
                     key={icon}
-                    style={{
-                      margin: 3,
-                      padding: 5,
-                      paddingLeft: 10,
-                      paddingRight: 10,
-                      backgroundColor: '#d9d9d9',
-                      borderRadius: 15,
-
-                      display: 'flex',
-                      flexDirection: 'row',
-                      justifyContent: 'flex-start',
-                      alignItems: 'center'
-                    }}
+                    style={styles.infoItemContainer}
                   >
-                    <MaterialCommunityIcons name={icon} size={26} />
-                    <Text style={{ marginLeft: 5 }}>{t(label)}</Text>
+                    <MaterialCommunityIcons
+                      name={icon}
+                      size={ICON_SIZE}
+                      style={styles.infoItemIcon}
+                    />
+                    <View style={styles.infoItemCont}>
+                      <Text style={styles.infoItemText}>{t(title)}</Text>
+                      <Text>{t(label)}</Text>
+                    </View>
                   </View>
                 ))}
-              </View>
+              </ScrollView>
             </View>
           )}
 
+          {/* <Img images={user.images} ix={1} /> */}
+
           {user.selectedInterests.length > 0 && (
-            <View style={{
-              marginTop: 10
-            }}>
+            <View style={styles.sectionContainer}>
               <ProfileItemHeading>{t('Interests')}</ProfileItemHeading>
-              <View style={{
-                display: 'flex',
-                flexDirection: 'row',
-                flexWrap: 'wrap'
-              }}>
+              <View style={styles.interestsContainer}>
                 {allInterests
                   .filter(({ id }: any) => (user?.selectedInterests ?? []).includes(id))
                   .map((interest: any) => (
                     <View
                       key={interest.id}
-                      style={{
-                        margin: 3,
-                        padding: 5,
-                        paddingLeft: 15,
-                        paddingRight: 15,
-                        backgroundColor: interest.selected ? 'pink' : '#d9d9d9',
-                        borderRadius: 15,
-                      }}
+                      style={[styles.interestItem, {
+                        backgroundColor: interest.selected ? MAIN_COLOR : '#d9d9d9',
+                      }]}
                     >
                       <Text>{t(interest.name)}</Text>
                     </View>
@@ -343,26 +522,42 @@ export default function UserProfile({ userId, showActions, distanceInKm, setLoad
             </View>
           )}
 
+          {/* <Img images={user.images} ix={1} /> */}
+
           {user.questionAnswers.length > 0 && (
-            <View style={{
-              marginTop: 10
-            }}>
+            <View style={styles.sectionContainer}>
               <ProfileItemHeading>{t('Questions')}</ProfileItemHeading>
-              {user.questionAnswers.map((answer: any) => (
+              {user.questionAnswers.map((answer: any, ix: number) => (
                 <React.Fragment key={answer.answerId}>
                   <View
-                    style={{
-                      marginBottom: 5
-                    }}
+                    style={styles.questionContainer}
                   >
-                    <Text style={{ fontSize: 18, fontWeight: '700' }}>{allProfileQuestions[answer.questionId]}</Text>
-                    <Text style={{ fontSize: 15 }}>{answer.answer}</Text>
+                    <Text style={styles.questionText}>{allProfileQuestions[answer.questionId]}</Text>
+                    <Text style={styles.answerText}>{answer.answer}</Text>
                   </View>
-                  <Divider />
+                  {(ix !== user.questionAnswers.length - 1) && (
+                    <Divider style={styles.answerDivider} />
+                  )}
                 </React.Fragment>
               ))}
             </View>
           )}
+        </View>
+
+        <View style={{
+          marginTop: 10,
+          marginBottom: 35,
+        }}>
+          <Button
+            uppercase={false}
+            mode={'contained'}
+            style={{
+              borderRadius: 20,
+            }}
+            labelStyle={{
+              color: Colors.white
+            }}
+          >Report user</Button>
         </View>
       </ScrollView>
 
@@ -373,6 +568,15 @@ export default function UserProfile({ userId, showActions, distanceInKm, setLoad
 
 function ProfileItemHeading({ children }: any) {
   return (
-    <ItemHeading size={23} color={'gray'} marginBottom={5}>{children}</ItemHeading>
+    <ItemHeading
+      size={ICON_SIZE}
+      color={'gray'}
+      // marginBottom={5}
+      style={styles.heading}
+    // style={{
+    //   fontWeight: undefined,
+    //   color: MAIN_COLOR,
+    // }}
+    >{children}</ItemHeading>
   );
 }

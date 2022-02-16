@@ -1,24 +1,21 @@
-import * as Notifications from 'expo-notifications';
+// import * as Notifications from 'expo-notifications';
+// import config from './config';
+// import { requestNotificationsPermissions } from './utils';
 
-const requestNotificationsPermission = async () => {
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  let finalStatus = existingStatus;
-  if (existingStatus !== 'granted') {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
+// export const getExpoPushNotificationToken: () => Promise<string | null> = async () => {
+//   const granted = await requestNotificationsPermissions();
+//   console.log('granted', granted);
+//   if (!granted) {
+//     return null;
+//   }
+//   console.log('-1-');
 
-  return finalStatus;
-};
+//   // const token = await Notifications.getExpoPushTokenAsync();
+//   const token = await Notifications.getExpoPushTokenAsync({ experienceId: config.EXPERIENCE_ID });
+//   // ExponentPushToken[AfNbOAM4nMRTLvfLabmDiq]
+//   // ExponentPushToken[AfNbOAM4nMRTLvfLabmDiq]
+//   console.log('-2-');
+//   console.log('TOKEN:', token);
 
-export const getExpoPushNotificationToken: () => Promise<string | null> = async () => {
-  const status = await requestNotificationsPermission();
-  if (status !== 'granted') {
-    return null;
-  }
-
-  const token = await Notifications.getExpoPushTokenAsync();
-  console.log('TOKEN:', token);
-
-  return token?.data;
-}
+//   return token?.data;
+// }

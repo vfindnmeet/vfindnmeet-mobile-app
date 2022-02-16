@@ -1,52 +1,37 @@
-import React, { useEffect, useState } from 'react';
-import { Alert, Modal, Text, TouchableHighlight, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
-// import { TouchableHighlight, TouchableOpacity, TouchableWithoutFeedback } from 'react-native-gesture-handler';
-import { TouchableRipple } from 'react-native-paper';
-// import { Button, Paragraph, Dialog, Portal, Provider } from 'react-native-paper';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { Colors } from 'react-native/Libraries/NewAppScreen';
+import React from 'react';
+import { Modal, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import EStyleSheet from 'react-native-extended-stylesheet';
 
-export default function BottomModal({ show, onHide, children }: any) {
-  const [visible, setVisible] = useState(false);
-  // const [visible, setVisible] = useState(true);
+const styles = EStyleSheet.create({
+  backdrop: {
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    flex: 1,
+    display: 'flex',
+    justifyContent: 'flex-end',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  modal: {
+    backgroundColor: '#fff',
+    padding: '5rem',
+    borderTopRightRadius: '10rem',
+    borderTopLeftRadius: '10rem',
+  },
+});
 
-  useEffect(() => {
-    setVisible(show);
-  }, [show]);
-
+export default function BottomModal({ show, onHide, children, style }: any) {
   return (
     <Modal
       animationType="slide"
       transparent={true}
       visible={show}
-      onDismiss={() => {
-        // console.log('ON DISMISS');
-      }}
-      onRequestClose={() => {
-        // console.log('----ON-CLOSE-----');
-      }}
+      onDismiss={() => { }}
+      onRequestClose={() => { }}
     >
       <TouchableOpacity style={{ flex: 1 }} onPress={onHide}>
-        <View style={{
-          backgroundColor: 'rgba(0, 0, 0, 0.6)',
-          flex: 1,
-          display: 'flex',
-          justifyContent: 'flex-end',
-          position: 'relative',
-          // borderRadius: 15,
-          overflow: 'hidden',
-          // borderTopRightRadius: 15,
-          // borderTopLeftRadius: 15,
-          // padding: 5,
-          // opacity: 1
-        }}>
+        <View style={styles.backdrop}>
           <TouchableWithoutFeedback>
-            <View style={{
-              backgroundColor: '#fff',
-              padding: 5,
-              borderTopRightRadius: 10,
-              borderTopLeftRadius: 10,
-            }}>
+            <View style={[styles.modal, style ?? {}]}>
               {children}
             </View>
           </TouchableWithoutFeedback>

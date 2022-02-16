@@ -1,18 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
-import { Button, TextInput } from 'react-native-paper';
+import { Button, HelperText, TextInput } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
+import UnauthorizedError from '../../errors/UnauthorizedError';
 import { useIsMounted } from '../../hooks/useIsMounted';
 import { updateLikeMessage } from '../../services/api';
+import { logOutUser } from '../../store/actions/auth';
 import { userIntoUpdated, userLiked } from '../../store/actions/like';
 import { getLoggedUserIdSelector, getTokenSelector } from '../../store/selectors/auth';
 import { getIntroModalDataSelector } from '../../store/selectors/modal';
-import { throwErrorIfErrorStatusCode } from '../../utils';
+import { getErrorMessage, handleError, throwErrorIfErrorStatusCode } from '../../utils';
 
 export default function IntroDialog({ show, onHide }: any) {
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const dispatch = useDispatch();
   const isMounted = useIsMounted();
@@ -73,11 +76,14 @@ export default function IntroDialog({ show, onHide }: any) {
                   value={text}
                   onChangeText={setText}
                 />
+
+                {!!error && (<HelperText type="error">{t(error)}</HelperText>)}
+
                 <View
                   style={{
                     display: 'flex',
                     flexDirection: 'row',
-                    justifyContent: 'flex-end',
+                    justifyContent: 'space-between',
                     marginTop: 5
                   }}
                 >
@@ -90,10 +96,13 @@ export default function IntroDialog({ show, onHide }: any) {
                   <Button
                     style={{ margin: 2 }}
                     mode="outlined"
-                    disabled={loading}
+                    disabled={loading || typeof text !== 'string' || '' === text.trim()}
                     loading={loading}
                     onPress={() => {
+                      if (loading || typeof text !== 'string' || '' === text.trim()) return;
+
                       setLoading(true);
+
                       updateLikeMessage(data.likeId, text, token)
                         .then(throwErrorIfErrorStatusCode)
                         .then(() => {
@@ -103,10 +112,26 @@ export default function IntroDialog({ show, onHide }: any) {
                             message: text
                           }));
 
+                          // if (!isMounted.current) return;
+                          // setLoading(false);
+                          hide();
+                        })
+                        // .catch(err => {
+                        //   handleError(err, dispatch);
+                        // })
+                        .catch(err => {
+                          if (err instanceof UnauthorizedError) {
+                            dispatch(logOutUser());
+
+                            return;
+                          }
+
+                          setError(getErrorMessage(err.message));
+                        })
+                        .finally(() => {
                           if (!isMounted.current) return;
 
                           setLoading(false);
-                          hide();
                         });
                     }}
                   >{t('Send')}</Button>

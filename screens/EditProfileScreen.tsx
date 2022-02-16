@@ -1,10 +1,7 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { View, Text, ScrollView } from 'react-native';
-import CBottomTabs from '../navigation/CBottomTabs';
-import CustomProfileInfoHeader from '../navigation/CustomProfileInfoHeader';
-import { ActivityIndicator, Button, TextInput } from 'react-native-paper';
-import { getInterests, getProfile, getProfileQuestions, updateProfile } from '../services/api';
-import { retryHttpRequest } from '../utils';
+import React, { useEffect } from 'react';
+import { View, ScrollView } from 'react-native';
+import { getInterests, getProfile, getProfileQuestions } from '../services/api';
+import { handleError, retryHttpRequest } from '../utils';
 import { useDispatch, useSelector } from 'react-redux';
 import { clearProfile, fetchProfile, setProfile } from '../store/actions/profile';
 import { setAllInterests, setAllProfileQuestions } from '../store/actions/common';
@@ -17,9 +14,25 @@ import Title from '../components/profileInfo/Title';
 import { getProfileSelector } from '../store/selectors/profile';
 import { getTokenSelector } from '../store/selectors/auth';
 import { useIsMounted } from '../hooks/useIsMounted';
-import { clearRoute, setRoute } from '../store/actions/route';
-import { useRoute } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import useRouteTrack from '../hooks/useRouteTrack';
+import Personality from '../components/profileInfo/Personality';
+import { useTranslation } from 'react-i18next';
+import BaseHeader from '../navigation/BaseHeader';
+import BackButton from '../navigation/BackButton';
+import PageLoader from '../components/common/PageLoader';
+
+function EditProfileHeader(props: any) {
+  const navigation: any = useNavigation();
+  const { t } = useTranslation();
+
+  return (
+    <BaseHeader
+      text={t('Edit Profile')}
+      leftButton={<BackButton />}
+    />
+  );
+}
 
 export default function EditProfileScreen(props: any) {
   const dispatch = useDispatch();
@@ -42,6 +55,7 @@ export default function EditProfileScreen(props: any) {
   const token = useSelector(getTokenSelector);
   const profile: any = useSelector(getProfileSelector);
   const loadingProfile: any = useSelector(({ profile }: any) => profile.loading ?? true);
+  const personalityType: any = useSelector(({ profile }: any) => profile.profile?.info?.personality_type);
 
   const allInterests: any = useSelector(({ common }: any) => common.interests);
   const allProfileQuestions: any = useSelector(({ common }: any) => common.profileQuestions);
@@ -53,12 +67,19 @@ export default function EditProfileScreen(props: any) {
       return;
     }
 
-    retryHttpRequest(getInterests.bind(null, token as string))
+    retryHttpRequest(() => {
+      if (!isMounted.current) return null;
+
+      return getInterests(token as string);
+    })
       // .then(throwErrorIfErrorStatusCode)
       .then((result: any) => result.json())
       .then(interests => {
         dispatch(setAllInterests(interests));
       })
+      .catch(e => {
+        handleError(e, dispatch);
+      });
   }, []);
 
   useEffect(() => {
@@ -66,12 +87,19 @@ export default function EditProfileScreen(props: any) {
       return;
     }
 
-    retryHttpRequest(getProfileQuestions.bind(null, token as string))
+    retryHttpRequest(() => {
+      if (!isMounted.current) return null;
+
+      return getProfileQuestions(token as string);
+    })
       // .then(throwErrorIfErrorStatusCode)
       .then((result: any) => result.json())
       .then(allProfileQuestions => {
         dispatch(setAllProfileQuestions(allProfileQuestions));
       })
+      .catch(e => {
+        handleError(e, dispatch);
+      });
   }, []);
 
   // useEffect(() => {
@@ -82,13 +110,20 @@ export default function EditProfileScreen(props: any) {
 
   useEffect(() => {
     dispatch(fetchProfile());
-    retryHttpRequest(getProfile.bind(null, token as string))
+    retryHttpRequest(() => {
+      if (!isMounted.current) return null;
+
+      return getProfile(token as string);
+    })
       // .then(throwErrorIfErrorStatusCode)
       .then((result: any) => result.json())
       .then(json => {
         if (!isMounted.current) return;
 
         dispatch(setProfile(json));
+      })
+      .catch(e => {
+        handleError(e, dispatch);
       });
 
     return () => {
@@ -102,17 +137,9 @@ export default function EditProfileScreen(props: any) {
       <View style={{
         flex: 1
       }}>
-        <CustomProfileInfoHeader />
-        <View style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}>
-          <ActivityIndicator size={70} />
-        </View>
-        <CBottomTabs />
+        <EditProfileHeader />
+        <PageLoader />
+        {/* <CBottomTabs /> */}
       </View>
     )
   }
@@ -121,19 +148,20 @@ export default function EditProfileScreen(props: any) {
     <View style={{
       flex: 1
     }}>
-      <CustomProfileInfoHeader />
+      <EditProfileHeader />
       <ScrollView style={{
         flex: 1
       }}>
         <Gallery images={profile.images ?? []} userId={profile.id} />
-        <Title title={profile.title} />
+        <Title work={profile.work} education={profile.education} />
         <Description description={profile.description} />
         <Info info={profile.info} />
+        <Personality personality={personalityType} />
         <Interests selectedInterests={profile.selectedInterests} />
         <Questions questionAnswers={profile.questionAnswers} />
       </ScrollView>
 
-      <CBottomTabs />
+      {/* <CBottomTabs /> */}
     </View >
   );
 }

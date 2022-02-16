@@ -5,13 +5,18 @@ import {
   Button as MatButton,
   HelperText
 } from "react-native-paper";
+import { useIsMounted } from '../../hooks/useIsMounted';
 
 export default function OnboardingBirthday(props: any) {
   const { t } = useTranslation();
+  const isMounted = useIsMounted();
+
   const [day, setDay] = useState<number | null>(null);
   const [month, setMonth] = useState<number | null>(null);
   const [year, setYear] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const [loading, setLoading] = useState(false);
 
   const dayRef = useRef(null);
   const monthRef = useRef(null);
@@ -82,7 +87,13 @@ export default function OnboardingBirthday(props: any) {
     // console.log('!!!', day, month, year);
 
     // props.setBirthday(`${day < 10 ? `0${day}` : day}-${month < 10 ? `0${month}` : month}-${year}`);
-    props.nextStep();
+    setLoading(true);
+    props.nextStep()
+      .finally(() => {
+        if (!isMounted.current) return;
+
+        setLoading(false);
+      });
   };
 
   return (
@@ -147,7 +158,8 @@ export default function OnboardingBirthday(props: any) {
       )}
 
       <MatButton
-        disabled={error !== null}
+        loading={loading}
+        disabled={error !== null || loading}
         style={{ width: '100%', marginTop: 15 }}
         uppercase={false}
         mode="contained"

@@ -1,12 +1,44 @@
 import React, { useEffect, useState } from 'react';
 import { Image, Modal, Text, TouchableWithoutFeedback, View } from 'react-native';
-import { ActivityIndicator, Button, Colors } from 'react-native-paper';
+import { Button, Colors } from 'react-native-paper';
 import { useSelector } from 'react-redux';
 import { getMatchModalDataSelector } from '../../store/selectors/modal';
 import { useNavigation } from '@react-navigation/native';
 import { getDefaultImage } from '../DefaultImages';
 import * as Font from 'expo-font';
 import { useTranslation } from 'react-i18next';
+import PageLoader from '../common/PageLoader';
+import EStyleSheet from 'react-native-extended-stylesheet';
+
+const styles = EStyleSheet.create({
+  backdrop: {
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    flex: 1,
+    display: 'flex',
+    justifyContent: 'center',
+    position: 'relative',
+    padding: '15rem'
+  },
+  title: {
+    color: Colors.white,
+    textAlign: 'center',
+    fontSize: '50rem',
+    fontFamily: 'astralsisters',
+    marginBottom: '25rem'
+  },
+  image: {
+    width: '50%',
+    borderRadius: 400,
+    aspectRatio: 1
+  },
+  secondImage: {
+    marginLeft: '-40rem',
+  },
+  button: {
+    marginTop: '15rem',
+    borderColor: Colors.white
+  }
+});
 
 export default function MatchedDialog({ show, onHide }: any) {
   const navigation: any = useNavigation();
@@ -44,49 +76,26 @@ export default function MatchedDialog({ show, onHide }: any) {
           hide();
         }}
       >
-        <View style={{
-          backgroundColor: 'rgba(0, 0, 0, 0.6)',
-          flex: 1,
-          display: 'flex',
-          justifyContent: 'center',
-          position: 'relative',
-          padding: 15
-        }}>
+        <View style={styles.backdrop}>
           <TouchableWithoutFeedback>
             <View style={{
               padding: 10,
               borderRadius: 5
             }}>
               {loading && (
-                <View style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  justifyContent: 'center'
-                }}>
-                  <ActivityIndicator size={50} />
-                </View>
+                <PageLoader fullScreen={false} />
               )}
               {!loading && data?.me && data?.user && (
                 <View>
                   <Text
-                    style={{
-                      color: Colors.white,
-                      textAlign: 'center',
-                      fontSize: 50,
-                      fontFamily: 'astralsisters',
-                      marginBottom: 25
-                    }}>{t('It\'s a Match')}</Text>
+                    style={styles.title}>{t('It\'s a Match')}</Text>
                   <View style={{
                     display: 'flex',
                     flexDirection: 'row',
                     justifyContent: 'center'
                   }}>
                     <Image
-                      style={{
-                        width: '50%',
-                        borderRadius: 400,
-                        aspectRatio: 1
-                      }}
+                      style={styles.image}
                       resizeMethod="resize"
                       resizeMode="contain"
                       source={{
@@ -94,12 +103,7 @@ export default function MatchedDialog({ show, onHide }: any) {
                       }}
                     />
                     <Image
-                      style={{
-                        width: '50%',
-                        borderRadius: 400,
-                        aspectRatio: 1,
-                        marginLeft: -40
-                      }}
+                      style={[styles.image, styles.secondImage]}
                       resizeMethod="resize"
                       resizeMode="contain"
                       source={{ uri: data.user.profileImage || getDefaultImage(data.user.gender).uri }}
@@ -109,10 +113,7 @@ export default function MatchedDialog({ show, onHide }: any) {
                     uppercase={false}
                     mode="outlined"
                     color={Colors.white}
-                    style={{
-                      marginTop: 15,
-                      borderColor: Colors.white
-                    }}
+                    style={styles.button}
                     onPress={() => {
                       navigation.navigate('UserChat', { userId: data.user.id });
                     }}
@@ -121,10 +122,7 @@ export default function MatchedDialog({ show, onHide }: any) {
                     uppercase={false}
                     mode="outlined"
                     color={Colors.white}
-                    style={{
-                      marginTop: 15,
-                      borderColor: Colors.white
-                    }}
+                    style={styles.button}
                     onPress={() => {
                       onHide();
                     }}

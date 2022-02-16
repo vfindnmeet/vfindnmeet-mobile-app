@@ -3,53 +3,107 @@ import { View, Text, TextInput, Image, TouchableWithoutFeedback } from 'react-na
 import { ActivityIndicator, Colors, IconButton } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
-import ImagePicker1 from '../components/ImagePicker1';
+import ImagePicker from '../components/ImagePicker';
 import { useIsMounted } from '../hooks/useIsMounted';
-import { deleteFile2, getChat, getChats, sendChatMessage } from '../services/api';
-import { addNotDeliveredChatMessage, clearChat, setChat, setChatSeen } from '../store/actions/chat';
+import { deleteImage, getChat, getChats, getWouldYouRatherQuestions, sendChatMessage } from '../services/api';
+import { addNotDeliveredChatMessage, clearChat, setChat, setChatSeen, setWouldYouRatherGameQuestions } from '../store/actions/chat';
 import { getLoggedUserIdSelector, getTokenSelector } from '../store/selectors/auth';
-import { getChatLoadingSelector, getChatMessagesSelector, getChatUserSelector, getCurrentChatIdSelector, getHasChatMessagesSelector } from '../store/selectors/chat';
-import { WsContext } from '../store/WsContext';
-import { isVerified, retryHttpRequest, throwErrorIfErrorStatusCode } from '../utils';
+import { getChatLoadingSelector, getChatMessagesSelector, getChatUserSelector, getCurrentChatIdSelector, getHasChatMessagesSelector, getWouldYouRatherQuestionsSelector } from '../store/selectors/chat';
+import { handleError, isVerified, retryHttpRequest, throwErrorIfErrorStatusCode } from '../utils';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import ChatMessages from '../components/chat/ChatMessages';
-import PageLoader from '../components/common/PageLoaded';
+import PageLoader from '../components/common/PageLoader';
 import { getDefaultImage } from '../components/DefaultImages';
 import OnlineBadge from '../components/OnlineBadge';
 import VerifiedBadge from '../components/VerifiedBadge';
-import { useRoute } from '@react-navigation/native';
-import { clearRoute, setRoute } from '../store/actions/route';
 import UnauthorizedError from '../errors/UnauthorizedError';
 import { logOutUser } from '../store/actions/auth';
 import { useTranslation } from 'react-i18next';
 import useRouteTrack from '../hooks/useRouteTrack';
+import { hideIcebreakerModal, showErrorModal, showIcebreakerModal } from '../store/actions/modal';
+import IcebreakerPickDialog from '../components/modal/IcebreakerPickDialog';
+import { shouldShowIcebreakerModalSelector } from '../store/selectors/modal';
+import BackButton from '../navigation/BackButton';
+import { BIG_ICON_SIZE, ICON_SIZE } from '../constants';
+import EStyleSheet from 'react-native-extended-stylesheet';
 
-const onRemoveImage = async (image: any, token: string) => {
-  const response: any = await deleteFile2(image.imageId, token);
-
-  if (response.status != 201) {
-    return false;
-  }
-
-  return true;
-};
+const styles = EStyleSheet.create({
+  userContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+  userInnerContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+  image: {
+    width: '40rem',
+    borderRadius: 100,
+    aspectRatio: 1,
+    marginRight: '5rem'
+  },
+  userName: {
+    fontSize: '20rem',
+    fontWeight: 'bold'
+  },
+  chatMessagesContainer: {
+    flex: 1,
+    backgroundColor: Colors.white
+  },
+  actionsContainer: {
+    borderTopWidth: 1,
+    borderColor: 'gray'
+  },
+  imageContainer: {
+    padding: '5rem',
+    display: 'flex',
+    flexDirection: 'row'
+  },
+  imagesInnerContainer: {
+    position: 'relative',
+    width: '200rem',
+  },
+  uploadImage: {
+    width: '100%',
+    aspectRatio: 1
+  },
+  deleteImageButton: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: '#000',
+    opacity: 0.7,
+    borderRadius: 100,
+    borderWidth: 1,
+  },
+  imageLoadingContainer: {
+    position: 'absolute',
+    top: 0,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    aspectRatio: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+  },
+  textInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderStartColor: 'gray',
+    borderRadius: '30rem',
+    paddingLeft: '10rem',
+    paddingRight: '10rem',
+    marginLeft: '5rem',
+    padding: '5rem'
+  },
+});
 
 export default function ChatScreen({ route, navigation }: any) {
   const dispatch = useDispatch();
 
   useRouteTrack();
-  // const route2 = useRoute();
-
-  // useEffect(() => {
-  //   dispatch(setRoute({
-  //     routeName: route2.name,
-  //     params: route2.params
-  //   }));
-
-  //   return () => {
-  //     dispatch(clearRoute());
-  //   };
-  // }, []);
 
   const isMounted = useIsMounted();
   const { t } = useTranslation();
@@ -60,6 +114,8 @@ export default function ChatScreen({ route, navigation }: any) {
   const hasMessages = useSelector(getHasChatMessagesSelector);
   const messages = useSelector(getChatMessagesSelector);
 
+  const shouldShowIcebreakerModal = useSelector(shouldShowIcebreakerModalSelector);
+
   const token = useSelector(getTokenSelector);
   const loggedUserId = useSelector(getLoggedUserIdSelector);
 
@@ -67,10 +123,12 @@ export default function ChatScreen({ route, navigation }: any) {
   const [image, setImage] = useState<{ imageId: string; uri_big: string; uri_small: string } | null>(null);
   const [imageLoading, setImageLoading] = useState<boolean>(false);
 
-  const { sendMessage } = useContext(WsContext);
-
   useEffect(() => {
-    retryHttpRequest(getChat.bind(null, route.params.userId, token))
+    retryHttpRequest(() => {
+      if (!isMounted.current) return null;
+
+      return getChat(route.params.userId, token);
+    })
       // getChat(route.params.userId, token)
       // .then(throwErrorIfErrorStatusCode)
       .then((result: any) => result.json())
@@ -80,6 +138,9 @@ export default function ChatScreen({ route, navigation }: any) {
         dispatch(setChat(result));
         // dispatch(setChatSeen(result.chatId, true));
       })
+      .catch(e => {
+        handleError(e, dispatch);
+      });
 
     return () => {
       dispatch(clearChat());
@@ -93,229 +154,181 @@ export default function ChatScreen({ route, navigation }: any) {
   }
 
   return (
-    <View style={{ flex: 1 }}>
-      <SafeAreaView>
-        <View style={{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center'
-        }}>
-          <IconButton
-            icon="chevron-left"
-            color={Colors.black}
-            size={30}
-            onPress={() => navigation.navigate('ChatMessages')}
-          />
-          <TouchableWithoutFeedback
-            onPress={() => navigation.navigate('Profile', { userId: user.id })}
-          >
-            <View style={{
-              display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'center'
-            }}>
-              <Image
-                style={{
-                  width: 40,
-                  borderRadius: 100,
-                  aspectRatio: 1,
-                  marginRight: 5
-                }}
-                source={{ uri: user.profileImage ?? getDefaultImage(user.gender).uri }}
-              />
-              <Text style={{
-                fontSize: 20,
-                fontWeight: 'bold'
-              }}>{user.name}</Text>
-              {user.isOnline && <OnlineBadge style={{ marginLeft: 5 }} />}
-              {isVerified(user.verification_status) && <VerifiedBadge style={{ marginLeft: 5 }} />}
-            </View>
-          </TouchableWithoutFeedback>
-        </View>
-      </SafeAreaView>
-
-      <View style={{ flex: 1, backgroundColor: '#fff' }}>
-        <ChatMessages />
-      </View>
-
-      <View
-        style={{
-          borderTopWidth: 1,
-          borderColor: 'gray'
-        }}
-      >
-        {(image || imageLoading) && (
-          <View style={{
-            padding: 5,
-            display: 'flex',
-            flexDirection: 'row'
-          }}>
-            <View style={{
-              position: 'relative',
-              width: 200,
-            }}>
-              {image && (
-                <>
-                  <Image
-                    style={{
-                      width: '100%',
-                      aspectRatio: 1
-                    }}
-                    source={{
-                      uri: image.uri_big
-                    }}
-                  />
-                  <IconButton
-                    icon="close"
-                    size={25}
-                    color={Colors.redA700}
-                    onPress={async () => {
-                      if (imageLoading) return;
-
-                      setImageLoading(true);
-                      const removed: boolean = await onRemoveImage(image, token);
-
-                      if (removed && isMounted.current) {
-                        setImage(null);
-                        setImageLoading(false);
-                      }
-                    }}
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      right: 0,
-                      backgroundColor: '#000',
-                      opacity: 0.7,
-                      borderRadius: 100,
-                      borderWidth: 1,
-                    }}
-                  />
-                </>
-              )}
-              {imageLoading && (
-                <View style={{
-                  position: 'absolute',
-                  top: 0,
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  width: '100%',
-                  aspectRatio: 1,
-                  backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                }}>
-                  <ActivityIndicator size={40} />
-                </View>
-              )}
-            </View>
-          </View>
-        )}
-        <View style={{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center'
-        }}>
-          {(!!messages && messages.filter(({ userId }: any) => userId !== loggedUserId).length > 0) && (
-            <ImagePicker1
-              shouldUpload={() => {
-                if (imageLoading) {
-                  return false;
-                }
-
-                return true;
-              }}
-              onStartUpload={() => {
-                setImageLoading(true);
-              }}
-              onUpload={(image: any) => {
-                if (!isMounted.current) return;
-
-                setImage(image);
-                setImageLoading(false);
-              }}
+    <>
+      <View style={{ flex: 1 }}>
+        <SafeAreaView>
+          <View style={styles.userContainer}>
+            <BackButton />
+            <TouchableWithoutFeedback
+              onPress={() => navigation.navigate('Profile', { userId: user.id })}
             >
-              <MaterialCommunityIcons
-                style={{
-                  marginLeft: 5,
-                  // marginRight: 5
-                }}
-                name="plus-circle"
-                size={25}
-              />
-            </ImagePicker1>
+              <View style={styles.userInnerContainer}>
+                <Image
+                  style={styles.image}
+                  source={{ uri: user.profileImage ?? getDefaultImage(user.gender).uri }}
+                />
+                <Text style={styles.userName}>{user.name}</Text>
+                {user.isOnline && <OnlineBadge style={{ marginLeft: 5 }} />}
+                {isVerified(user.verification_status) && <VerifiedBadge style={{ marginLeft: 5 }} />}
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </SafeAreaView>
+
+        <View style={styles.chatMessagesContainer}>
+          <ChatMessages />
+        </View>
+
+        <View style={styles.actionsContainer}>
+          {(image || imageLoading) && (
+            <View style={styles.imageContainer}>
+              <View style={styles.imagesInnerContainer}>
+                {image && (
+                  <>
+                    <Image
+                      style={styles.uploadImage}
+                      source={{
+                        uri: image.uri_big
+                      }}
+                    />
+                    <IconButton
+                      icon="close"
+                      size={ICON_SIZE}
+                      color={Colors.redA700}
+                      onPress={async () => {
+                        if (imageLoading) return;
+
+                        setImageLoading(true);
+
+                        try {
+                          await deleteImage(image.imageId, token).then(throwErrorIfErrorStatusCode);
+
+                          if (isMounted.current) {
+                            setImage(null);
+                            setImageLoading(false);
+                          }
+                        } catch (e) {
+                          if (e instanceof UnauthorizedError) { }
+                          else {
+                            dispatch(showErrorModal({ message: 'Internal server error.' }))
+                          }
+                        }
+                      }}
+                      style={styles.deleteImageButton}
+                    />
+                  </>
+                )}
+                {imageLoading && (
+                  <View style={styles.imageLoadingContainer}>
+                    <ActivityIndicator size={BIG_ICON_SIZE} />
+                  </View>
+                )}
+              </View>
+            </View>
           )}
-          <TextInput
-            placeholder={t('Enter your message...')}
-            value={message}
-            onChangeText={setMessage}
-            style={{
-              flex: 1,
-              borderWidth: 1,
-              borderStartColor: 'gray',
-              borderRadius: 30,
-              paddingLeft: 10,
-              paddingRight: 10,
-              marginLeft: 5,
-            }}
-          />
-          <IconButton
-            icon="send"
-            color={Colors.black}
-            size={25}
-            onPress={() => {
-              if (
-                (typeof message !== 'string' || message?.trim() === '') &&
-                !image
-              ) {
-                console.log('---1!', message, image);
-                return;
-              }
-              console.log('---2');
-
-              const messageData: {
-                chatId: string;
-                isNew: boolean;
-                text?: string;
-                imageId?: string;
-              } = {
-                chatId: currentChatId,
-                text: message,
-                isNew: !hasMessages,
-
-                // tmpId: v4()
-              };
-
-              if (image?.imageId) {
-                messageData.imageId = image?.imageId
-              }
-
-              console.log('msg data:', messageData);
-              // sendMessage('msg', messageData);
-
-              const nowTs = +Date.now();
-              sendChatMessage(user.id, messageData, token)
-                .then(throwErrorIfErrorStatusCode)
-                .catch(err => {
-                  if (err instanceof UnauthorizedError) {
-                    dispatch(logOutUser());
-                    return;
+          <View style={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center'
+          }}>
+            <IconButton
+              icon="ice-pop"
+              color={Colors.black}
+              size={ICON_SIZE}
+              onPress={() => {
+                dispatch(showIcebreakerModal());
+              }}
+            />
+            {(!!messages && messages.filter(({ userId }: any) => userId !== loggedUserId).length > 0) && (
+              <ImagePicker
+                shouldUpload={() => {
+                  if (imageLoading) {
+                    return false;
                   }
 
-                  console.log('ERR!!')
+                  return true;
+                }}
+                onStartUpload={() => {
+                  setImageLoading(true);
+                }}
+                onUpload={(image: any) => {
+                  if (!isMounted.current) return;
 
-                  dispatch(addNotDeliveredChatMessage({
-                    ...messageData,
-                    userId: loggedUserId,
-                    notDelivered: true,
-                    createdAt: nowTs
-                  }));
-                });
+                  setImage(image);
+                  setImageLoading(false);
+                }}
+              >
+                <MaterialCommunityIcons
+                  name="plus-circle"
+                  size={ICON_SIZE}
+                />
+              </ImagePicker>
+            )}
+            <TextInput
+              placeholder={t('Enter your message...')}
+              value={message}
+              onChangeText={setMessage}
+              style={styles.textInput}
+            />
+            <IconButton
+              icon="send"
+              color={Colors.black}
+              size={ICON_SIZE}
+              onPress={() => {
+                if (
+                  (typeof message !== 'string' || message?.trim() === '') &&
+                  !image
+                ) {
+                  return;
+                }
 
-              setMessage('');
-              setImage(null);
-            }}
-          />
+                const messageData: {
+                  chatId: string;
+                  isNew: boolean;
+                  text?: string;
+                  imageId?: string;
+                } = {
+                  chatId: currentChatId,
+                  text: message,
+                  isNew: !hasMessages,
+                };
+
+                if (image?.imageId) {
+                  messageData.imageId = image?.imageId
+                }
+
+                const nowTs = +Date.now();
+                sendChatMessage(user.id, messageData, token)
+                  .then(throwErrorIfErrorStatusCode)
+                  .catch(err => {
+                    if (err instanceof UnauthorizedError) {
+                      dispatch(logOutUser());
+                      return;
+                    }
+
+                    dispatch(addNotDeliveredChatMessage({
+                      ...messageData,
+                      userId: loggedUserId,
+                      notDelivered: true,
+                      createdAt: nowTs
+                    }));
+                  });
+
+                setMessage('');
+                setImage(null);
+              }}
+            />
+          </View>
         </View>
       </View>
-    </View>
+
+      <IcebreakerPickDialog
+        show={shouldShowIcebreakerModal}
+        onHide={() => dispatch(hideIcebreakerModal())}
+        onGameSelected={(game: number) => {
+          console.log('game selected:', game, typeof game);
+        }}
+      />
+    </>
   );
 }

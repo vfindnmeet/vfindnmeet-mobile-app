@@ -2,8 +2,9 @@ import { useNavigation } from '@react-navigation/native';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
-import { Appbar, IconButton } from 'react-native-paper';
+import { Appbar, Colors, IconButton } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ICON_SIZE } from '../constants';
 import BaseHeader from './BaseHeader';
 
 export default function CustomProfileInfoHeader(props: any) {
@@ -15,8 +16,24 @@ export default function CustomProfileInfoHeader(props: any) {
       text={t('Profile info')}
       leftButton={<IconButton
         icon="cog-outline"
-        size={26}
-        onPress={() => navigation.replace('GeneralSettings')}
+        size={ICON_SIZE}
+        style={{
+          backgroundColor: Colors.grey300
+        }}
+        onPress={() => {
+          // navigation.replace('GeneralSettings');
+          navigation.navigate('Settings');
+        }}
+      />}
+      rightButton={<IconButton
+        icon="account-edit-outline"
+        size={ICON_SIZE}
+        style={{
+          backgroundColor: Colors.grey300
+        }}
+        onPress={() => {
+          navigation.navigate('EditProfile');
+        }}
       />}
     />
   );
@@ -33,7 +50,7 @@ export default function CustomProfileInfoHeader(props: any) {
         <IconButton
           icon="cog-outline"
           // color={getColor(route.name === 'Browse')}
-          size={26}
+          size={ICON_SIZE}
           onPress={() => navigation.replace('GeneralSettings')}
         />
         <Text style={{ flex: 1, textAlign: 'center' }}>App name</Text>

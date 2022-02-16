@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Text, TouchableWithoutFeedback, View } from 'react-native';
-import { Button, Colors, TextInput } from 'react-native-paper';
+import { Button, Colors, HelperText, TextInput } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
-import BadRequestError from '../../errors/BadRequestError';
+import UnauthorizedError from '../../errors/UnauthorizedError';
 import { useIsMounted } from '../../hooks/useIsMounted';
 import { deactivate } from '../../services/api';
 import { logOutUser } from '../../store/actions/auth';
 import { getTokenSelector } from '../../store/selectors/auth';
-import { throwErrorIfErrorStatusCode } from '../../utils';
+import { getErrorMessage, handleError, throwErrorIfErrorStatusCode } from '../../utils';
 
 export default function DeactivateDialog({ show, onHide }: any) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const dispatch = useDispatch();
   const isMounted = useIsMounted();
@@ -77,7 +78,7 @@ export default function DeactivateDialog({ show, onHide }: any) {
                   style={{
                     display: 'flex',
                     flexDirection: 'row',
-                    justifyContent: 'flex-end',
+                    justifyContent: 'space-between',
                     marginTop: 5
                   }}
                 >
@@ -95,21 +96,35 @@ export default function DeactivateDialog({ show, onHide }: any) {
                     color={Colors.red400}
                     onPress={() => {
                       setLoading(true);
+                      {!!error && (<HelperText type="error">{t(error)}</HelperText>)}
                       deactivate(password, token)
                         .then(throwErrorIfErrorStatusCode)
                         .then(() => {
                           hide();
                           dispatch(logOutUser());
-
+                        })
+                        // .catch(err => {
+                        //   if (err instanceof BadRequestError) {
+                        //     setLoading(false);
+                        //   }
+                        //   console.log(err);
+                        // });
+                        // .catch(err => {
+                        //   handleError(err, dispatch);
+                        // })
+                        .catch(err => {
+                          if (err instanceof UnauthorizedError) {
+                            dispatch(logOutUser());
+          
+                            return;
+                          }
+          
+                          setError(getErrorMessage(err.message));
+                        })
+                        .finally(() => {
                           if (!isMounted.current) return;
 
                           setLoading(false);
-                        })
-                        .catch(err => {
-                          if (err instanceof BadRequestError) {
-                            setLoading(false);
-                          }
-                          console.log(err);
                         });
                     }}
                   >{t('Deactivate')}</Button>

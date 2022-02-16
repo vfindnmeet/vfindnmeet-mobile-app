@@ -5,14 +5,127 @@ import { Colors, IconButton, Text } from 'react-native-paper';
 import { useDispatch } from 'react-redux';
 import { showIntroMessageModal, showIntroModal } from '../store/actions/modal';
 import { getDefaultImage } from './DefaultImages';
-// import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import OnlineBadge from './OnlineBadge';
 import VerifiedBadge from './VerifiedBadge';
 import { isVerified } from '../utils';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
+import PersonalityBadge from './common/personality/PersonalityBadge';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { ICON_SIZE } from '../constants';
+import EStyleSheet from 'react-native-extended-stylesheet';
+
+const styles = EStyleSheet.create({
+  titleText: {
+    fontSize: '15.5rem',
+  },
+  introText: {
+    fontSize: '14rem',
+    top: '2rem',
+    right: '2rem',
+    borderRadius: '10rem',
+    padding: '10rem',
+  },
+  personalityBadge: {
+    position: 'absolute',
+    top: '5rem',
+    left: '5rem',
+  },
+  distanceCont: {
+    marginLeft: '5rem',
+    marginBottom: '5rem'
+  },
+  container: {
+    width: '50%',
+    padding: '3rem',
+    position: 'relative'
+  },
+  contRadius: {
+    borderRadius: '3rem'
+  },
+  nameCont: {
+    paddingLeft: '5rem'
+  },
+  marginLeft: {
+    marginLeft: '5rem'
+  },
+  innerContainer: {
+    width: '100%',
+    position: 'relative'
+  },
+  imageContainer: {
+    width: '100%',
+    overflow: 'hidden'
+  },
+  image: {
+    width: '100%',
+    aspectRatio: 1,
+  },
+  gradientContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+  },
+  infoContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    aspectRatio: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.33)',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'flex-end'
+  },
+  infoInnerContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    flexWrap: 'nowrap',
+  },
+  nameText: {
+    color: Colors.white,
+    flexShrink: 1
+  },
+  ageContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'nowrap',
+    // flex: 1
+    flexShrink: 2
+  },
+  ageText: {
+    color: Colors.white,
+    // fontSize: 16,
+  },
+  intoMessage: {
+    position: 'absolute',
+    // top: 2,
+    // right: 2,
+    // borderRadius: 10,
+    // padding: 10,
+    backgroundColor: 'rgba(255, 122, 112, 0.6)', //'rgba(220, 110, 160, 0.6)',
+    color: Colors.white
+  },
+  intoButton: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: '#000',
+    opacity: 0.7,
+    borderRadius: 100,
+    borderWidth: 1,
+  },
+});
 
 export default function UserItem({ user }: any) {
   const dispatch = useDispatch();
   const navigation: any = useNavigation();
+  const { t } = useTranslation();
 
   return (
     <TouchableWithoutFeedback
@@ -22,141 +135,88 @@ export default function UserItem({ user }: any) {
         navigation.navigate('Profile', { userId: user.id });
       }}
     >
-      <View
-        style={{
-          width: '50%',
-          padding: 3
-        }}
-      >
-        <View style={{
-          width: '100%',
-          overflow: 'hidden'
-        }}>
-          <Image
-            style={{
-              width: '100%',
-              aspectRatio: 1,
-              borderRadius: 3
-            }}
-            source={{ uri: user.profileImage ?? getDefaultImage(user.gender).uri }}
-          // source={{ uri: 'https://static.remove.bg/remove-bg-web/54743c30904cc98f30bb79359718a5ffd69392cd/assets/start-1abfb4fe2980eabfbbaaa4365a0692539f7cd2725f324f904565a9a744f8e214.jpg' }}
-          />
-          <View style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            aspectRatio: 1,
-            backgroundColor: 'rgba(0, 0, 0, 0.33)',
-            borderRadius: 3,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'flex-end'
-          }}>
-            <View style={{
-              padding: 5
-            }}>
-              {user.name && user.age && (
-                <View style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  justifyContent: 'flex-start',
-                  alignItems: 'center',
-                  flexWrap: 'nowrap',
-                  // flexGrow: 3
-                  // width: '100%'
-                }}>
-                  {/* <Text style={{
-                    color: Colors.white,
-                    fontSize: 16
-                  }}>{user.name} {user.age && `, ${user.age}`}</Text> */}
-                  <Text
-                    numberOfLines={1}
-                    style={{
-                      color: Colors.white,
-                      fontSize: 16,
-
-                      // flexBasis: '70%'//'30%'
-                      // flexGrow: 1
-
-                      flexShrink: 1
-                      // flex: 2
-                    }}>{user.name}</Text>
-                  <View style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    flexWrap: 'nowrap',
-                    // flex: 1
-                    flexShrink: 2
-                  }}>
-                    {user.age && (
-                      <Text
-                        style={{
-                          color: Colors.white,
-                          fontSize: 16,
-                        }}
-                      >, {user.age}</Text>
-                    )}
-                    {user.isOnline && (
-                      <OnlineBadge style={{
-                        marginLeft: 5,
-                      }} />
-                    )}
-                    {isVerified(user.verification_status) && (
-                      <VerifiedBadge style={{
-                        marginLeft: 5,
-                      }} />
-                    )}
+      <View style={styles.container}>
+        <View style={styles.innerContainer}>
+          <View style={styles.imageContainer}>
+            <Image
+              style={[styles.contRadius, styles.image]}
+              source={{ uri: user.profileImage ?? getDefaultImage(user.gender).uri }}
+            />
+          </View>
+          <LinearGradient
+            // Background Linear Gradient
+            colors={['transparent', 'rgba(0,0,0,0.2)']}
+            style={[styles.contRadius, styles.gradientContainer]}
+          >
+            <View style={[styles.contRadius, styles.infoContainer]}>
+              <View style={styles.nameCont}>
+                {user.name && user.age && (
+                  <View style={styles.infoInnerContainer}>
+                    <Text
+                      numberOfLines={1}
+                      style={[styles.titleText, styles.nameText]}>{user.name}</Text>
+                    <View style={styles.ageContainer}>
+                      {user.age && (
+                        <Text style={[styles.titleText, styles.ageText]}>, {user.age}</Text>
+                      )}
+                      {user.isOnline && (
+                        <OnlineBadge style={styles.marginLeft} />
+                      )}
+                      {isVerified(user.verification_status) && (
+                        <VerifiedBadge style={styles.marginLeft} />
+                      )}
+                    </View>
                   </View>
+                )}
+              </View>
+
+              {!!user.distanceInKm && (
+                <View style={styles.distanceCont}>
+                  <Text style={{ color: Colors.white }}>
+                    <MaterialCommunityIcons name="map-marker" /> {user.distanceInKm} {t('km away')}
+                  </Text>
                 </View>
               )}
             </View>
-          </View>
-          {user.canSendIntroMessage && (
-            <IconButton
-              icon="comment-text-outline"
-              size={25}
-              color={Colors.blue300}
-              onPress={() => {
-                dispatch(showIntroModal({
-                  likeId: user?.like?.id,
-                  userId: user.id,
-                  name: user.name
-                }));
-              }}
-              style={{
-                position: 'absolute',
-                top: 0,
-                right: 0,
-                backgroundColor: '#000',
-                opacity: 0.7,
-                borderRadius: 100,
-                borderWidth: 1,
-              }}
+
+            {!user.canSendIntroMessage && !!user.like?.message && (
+              <Text
+                numberOfLines={2}
+                ellipsizeMode="tail"
+                style={[styles.introText, styles.intoMessage]}
+                onPress={() => {
+                  dispatch(showIntroMessageModal({
+                    userId: user.id,
+                    name: user.name,
+                    fromUserId: user.like.fromUserId,
+                    message: user.like.message
+                  }));
+                }}
+              >{user.like.message}</Text>
+            )}
+
+            {user.canSendIntroMessage && (
+              <IconButton
+                icon="comment-text-outline"
+                size={ICON_SIZE}
+                color={Colors.blue300}
+                onPress={() => {
+                  dispatch(showIntroModal({
+                    likeId: user?.like?.id,
+                    userId: user.id,
+                    name: user.name
+                  }));
+                }}
+                style={styles.intoButton}
+              />
+            )}
+          </LinearGradient>
+
+          {user.personality && (
+            <PersonalityBadge
+              personality={user.personality}
+              style={styles.personalityBadge}
             />
-          )}
-          {!user.canSendIntroMessage && !!user.like?.message && (
-            <Text
-              numberOfLines={2}
-              ellipsizeMode="tail"
-              style={{
-                position: 'absolute',
-                top: 2,
-                left: 2,
-                backgroundColor: 'rgba(201, 150, 212, 0.5)',
-                borderRadius: 10,
-                padding: 10
-              }}
-              onPress={() => {
-                dispatch(showIntroMessageModal({
-                  userId: user.id,
-                  name: user.name,
-                  fromUserId: user.like.fromUserId,
-                  message: user.like.message
-                }));
-              }}
-            >{user.like.message}</Text>
           )}
         </View>
       </View>

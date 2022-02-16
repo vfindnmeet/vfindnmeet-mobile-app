@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Text, TouchableWithoutFeedback, View } from 'react-native';
 import { Button, Checkbox, Colors } from 'react-native-paper';
@@ -8,13 +8,13 @@ import { getBrowseOptionModalDataSelector } from '../../store/selectors/modal';
 
 export default function BrowseOptionDialog({ show, onHide, onlineOnly, setOnlineOnly }: any) {
   const [checked, setChecked] = useState(false);
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
 
-  const dispatch = useDispatch();
-  const isMounted = useIsMounted();
+  // const dispatch = useDispatch();
+  // const isMounted = useIsMounted();
   const { t } = useTranslation();
 
-  const data: { onlineOnly: boolean } = useSelector(getBrowseOptionModalDataSelector);
+  // const data: { onlineOnly: boolean } = useSelector(getBrowseOptionModalDataSelector);
   // const token = useSelector(getTokenSelector);
 
   useEffect(() => {
@@ -25,27 +25,31 @@ export default function BrowseOptionDialog({ show, onHide, onlineOnly, setOnline
     // }
   }, [onlineOnly]);
 
-  useEffect(() => {
-    if (show) {
-      // setChecked(onlineOnly ?? false);
-      setLoading(false);
-    }
-  }, [show]);
+  // useEffect(() => {
+  //   if (show) {
+  //     // setChecked(onlineOnly ?? false);
+  //     setLoading(false);
+  //   }
+  // }, [show]);
 
-  const hide = () => {
-    if (loading) return;
+  // const hide = () => {
+  //   if (loading) return;
 
-    onHide();
-  };
+  //   onHide();
+  // };
+
+  const onCheck = useCallback(() => {
+    setChecked(!checked);
+  }, [checked]);
 
   return (
     <Modal
       animationType="slide"
       transparent={true}
       visible={show}
-      onDismiss={() => {
-        console.log('ON DISMISS');
-      }}
+    // onDismiss={() => {
+    //   console.log('ON DISMISS');
+    // }}
     >
       <TouchableWithoutFeedback
         style={{ flex: 1 }}
@@ -70,43 +74,45 @@ export default function BrowseOptionDialog({ show, onHide, onlineOnly, setOnline
                   fontWeight: 'bold',
                   marginBottom: 5
                 }}>{t('Browse options')}</Text>
-                <View style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'flex-start'
-                }}>
-                  <Checkbox
-                    status={checked ? 'checked' : 'unchecked'}
-                    onPress={() => {
-                      setChecked(!checked);
-                    }}
-                  />
-                  <Text>{t('Show online only')}</Text>
-                </View>
+                <TouchableWithoutFeedback
+                  onPress={onCheck}
+                >
+                  <View style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'flex-start',
+                  }}>
+                    <Checkbox
+                      status={checked ? 'checked' : 'unchecked'}
+                      onPress={onCheck}
+                    />
+                    <Text>{t('Show online only')}</Text>
+                  </View>
+                </TouchableWithoutFeedback>
                 <View
                   style={{
                     display: 'flex',
                     flexDirection: 'row',
-                    justifyContent: 'flex-end',
+                    justifyContent: 'space-between',
                     marginTop: 5
                   }}
                 >
                   <Button
                     style={{ margin: 2 }}
                     mode="outlined"
-                    disabled={loading}
-                    onPress={hide}
+                    // disabled={loading}
+                    onPress={onHide}
                   >{t('Cancel')}</Button>
                   <Button
                     style={{ margin: 2 }}
                     mode="outlined"
-                    disabled={loading}
-                    loading={loading}
-                    color={Colors.red400}
+                    // disabled={loading}
+                    // loading={loading}
+                    // color={Colors.red400}
                     onPress={() => {
                       setOnlineOnly(checked);
-                      hide();
+                      onHide();
                     }}
                   >{t('Save')}</Button>
                 </View>

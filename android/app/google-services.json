@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "757840442449",
+    "project_id": "pn-test1-3b20d",
+    "storage_bucket": "pn-test1-3b20d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:757840442449:android:16fedf1108dc18a1017470",
+        "android_client_info": {
+          "package_name": "com.zivanof.vimeet"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "757840442449-9edrf0l2a3c2i7tgaagomkp7n7le2o0f.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC4tRLYZUV8FYy_W3vLSc6OehuHNchKFa4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "757840442449-9edrf0l2a3c2i7tgaagomkp7n7le2o0f.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:757840442449:android:f16b93d2450a0de5017470",
+        "android_client_info": {
+          "package_name": "com.zivanof.i18ntest"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "757840442449-9edrf0l2a3c2i7tgaagomkp7n7le2o0f.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC4tRLYZUV8FYy_W3vLSc6OehuHNchKFa4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "757840442449-9edrf0l2a3c2i7tgaagomkp7n7le2o0f.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
