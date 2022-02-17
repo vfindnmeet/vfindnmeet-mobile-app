@@ -450,7 +450,7 @@ export const getExpoPushNotificationToken: () => Promise<string | null> = async 
   // return token?.data;
 }
 
-export const updateLocationAndPushToken = (isMounted: any) => {
+export const updateLocationAndPushToken = (token: string, isMounted: any) => {
   return Promise.all([
     getLatLng()
       .then(location => ({
@@ -467,7 +467,7 @@ export const updateLocationAndPushToken = (isMounted: any) => {
       return retryHttpRequest(() => {
         if (!isMounted?.current) return;
 
-        return setAuthInfo({ lat, lon, pushToken });
+        return setAuthInfo({ lat, lon, pushToken }, token);
       }).catch(() => { });
     });
 }

@@ -8,6 +8,7 @@ import DislikeButton from './DislikeButton';
 import LikeButton from './LikeButton';
 import MessageButton from './MessageButton';
 import SendIntroButton from './SendIntroButton';
+import UnlikeButton from './UnlikeButton';
 import UnmatchButton from './UnmatchButton';
 
 const styles = EStyleSheet.create({
@@ -54,10 +55,12 @@ export default function Actions({ user }: any) {
 
   return (
     <ActionsCont style={styles.actionsContainer}>
-      {/* <UnlikeButton userId={userId} /> */}
+      <UnlikeButton userId={userId} />
 
-      <LikeButton userId={userId} disabled={true} styles={{ backgroundColor: 'pink' }} />
+      {/* <LikeButton userId={userId} disabled={true} styles={{ backgroundColor: 'pink' }} /> */}
       {!user.like.introSent && <SendIntroButton user={user} />}
+      {user.like.introSent && <LikeButton userId={userId} disabled={true} styles={{ backgroundColor: 'pink' }} />}
+
       {/* {user.like.introSent && <LikeButton userId={userId} disabled={true} />} */}
       {/* <ActionItemCont>
       </ActionItemCont>

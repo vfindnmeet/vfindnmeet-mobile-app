@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import {
   Button as MatButton,
   HelperText,
-  ActivityIndicator
+  ActivityIndicator,
+  Colors
 } from "react-native-paper";
 import OnboardingImagePicker from '../OnboardingImagePicker';
 import { getOnboardingImages } from '../../services/api';
@@ -12,6 +13,25 @@ import { getTokenSelector } from '../../store/selectors/auth';
 import { useSelector } from 'react-redux';
 import { useIsMounted } from '../../hooks/useIsMounted';
 import { useTranslation } from 'react-i18next';
+import EStyleSheet from 'react-native-extended-stylesheet';
+
+const styles = EStyleSheet.create({
+  container: {
+    padding: '15rem'
+  },
+  titleText: {
+    textAlign: 'center',
+    fontSize: '20rem'
+  },
+  button: {
+    width: '100%',
+    marginTop: '15rem',
+    borderRadius: '20rem'
+  },
+  buttonLabel: {
+    color: Colors.white
+  }
+});
 
 export default function OnboardingImages(props: any) {
   const isMounted = useIsMounted();
@@ -67,8 +87,8 @@ export default function OnboardingImages(props: any) {
   }
 
   return (
-    <View>
-      <Text style={{ textAlign: 'center', fontSize: 20 }}>{t('Upload images')}</Text>
+    <ScrollView>
+      <Text style={styles.titleText}>{t('Upload images')}</Text>
       <OnboardingImagePicker
         images={images}
         setImages={setImages}
@@ -77,17 +97,21 @@ export default function OnboardingImages(props: any) {
         allowImageChaning={!completing}
       />
 
-      <HelperText type="error" visible={!!error} >
-        {t(error)}
-      </HelperText>
+      <View style={styles.container}>
+        <HelperText type="error" visible={!!error} >
+          {t(error)}
+        </HelperText>
 
-      <MatButton
-        disabled={completing || images.length === 0}
-        style={{ width: '100%', marginTop: 15 }}
-        uppercase={false}
-        mode="contained"
-        onPress={onNextStep}
-      >{t('Complete')}</MatButton>
-    </View>
+        <MatButton
+          loading={completing}
+          disabled={completing || images.length === 0}
+          style={styles.button}
+          labelStyle={styles.buttonLabel}
+          uppercase={false}
+          mode="contained"
+          onPress={onNextStep}
+        >{t('Complete')}</MatButton>
+      </View>
+    </ScrollView>
   );
 }

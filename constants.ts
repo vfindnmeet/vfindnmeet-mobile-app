@@ -7,7 +7,6 @@ export const STORAGE_SHOW_PERSONALITY_INFO_KEY = 'vi-show-personality-info';
 
 export const MAIN_COLOR = '#ff7a70';
 
-
 const { width } = Dimensions.get('screen');
 export const LOADER_SIZE = width / 5; //30;
 export const ICON_SIZE = width / 15; // ~25

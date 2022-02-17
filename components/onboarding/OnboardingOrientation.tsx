@@ -1,11 +1,31 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
+import EStyleSheet from 'react-native-extended-stylesheet';
 import {
   Button as MatButton,
+  Colors,
   RadioButton
 } from "react-native-paper";
 import CRadioButton from '../CRadioButton';
+
+const styles = EStyleSheet.create({
+  container: {
+    padding: '15rem'
+  },
+  titleText: {
+    textAlign: 'center',
+    fontSize: '20rem'
+  },
+  button: {
+    width: '100%',
+    marginTop: '15rem',
+    borderRadius: '20rem'
+  },
+  buttonLabel: {
+    color: Colors.white
+  }
+});
 
 export default function OnboardingOrientation(props: any) {
   const { t } = useTranslation();
@@ -17,8 +37,8 @@ export default function OnboardingOrientation(props: any) {
   };
 
   return (
-    <View>
-      <Text style={{ textAlign: 'center', fontSize: 20 }}>{t('What are you interested in?')}</Text>
+    <View style={styles.container}>
+      <Text style={styles.titleText}>{t('What are you interested in?')}</Text>
       <View>
         <CRadioButton
           value="male"
@@ -78,7 +98,8 @@ export default function OnboardingOrientation(props: any) {
 
       <MatButton
         disabled={interestedIn === null}
-        style={{ width: '100%', marginTop: 15 }}
+        style={styles.button}
+        labelStyle={styles.buttonLabel}
         uppercase={false}
         mode="contained"
         onPress={onNextStep}

@@ -1,11 +1,34 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
+import EStyleSheet from "react-native-extended-stylesheet";
 import {
   Button as MatButton,
   TextInput as MatTextInput,
-  HelperText
+  HelperText,
+  Colors
 } from "react-native-paper";
+
+const styles = EStyleSheet.create({
+  container: {
+    padding: '15rem'
+  },
+  titleText: {
+    textAlign: 'center',
+    fontSize: '20rem'
+  },
+  input: {
+    marginTop: '5rem'
+  },
+  button: {
+    width: '100%',
+    marginTop: '15rem',
+    borderRadius: '20rem'
+  },
+  buttonLabel: {
+    color: Colors.white
+  }
+});
 
 export default function OnboardingName(props: any) {
   const [name, setName] = useState('');
@@ -17,15 +40,15 @@ export default function OnboardingName(props: any) {
   };
 
   return (
-    <View>
-      <Text style={{ textAlign: 'center', fontSize: 20 }}>{t('What\'s your name?')}</Text>
+    <View style={styles.container}>
+      <Text style={styles.titleText}>{t('What\'s your name?')}</Text>
       <View>
         <MatTextInput
           // autoComplete={false}
           label={t('Your name')}
-          mode="outlined"
+          mode="flat"
           value={name}
-          style={{ marginTop: 5 }}
+          style={styles.input}
           onChangeText={(text) => {
             setName(text);
           }}
@@ -38,7 +61,8 @@ export default function OnboardingName(props: any) {
 
       <MatButton
         disabled={name.length === 0}
-        style={{ width: '100%', marginTop: 15 }}
+        style={styles.button}
+        labelStyle={styles.buttonLabel}
         uppercase={false}
         mode="contained"
         onPress={onNextStep}

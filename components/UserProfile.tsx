@@ -266,6 +266,37 @@ function Img({ ix, images }: any) {
   );
 }
 
+function CImage({ user, distanceInKm, onPress, children }: any) {
+  const { t } = useTranslation();
+
+  return (
+    <TouchableWithoutFeedback
+      onPress={onPress}
+    >
+      <View>
+        {children}
+
+        <LinearGradient
+          colors={['transparent', 'transparent', 'transparent', 'rgba(0, 0, 0, 0.5)']}
+          style={[styles.contRadius, styles.gradientContainer]}
+        >
+          <View style={styles.gradientCont}>
+            <View style={styles.userInfoTextContainer}>
+              <Text style={[styles.nameText, { color: Colors.white }]}>{user.name}</Text>
+              <Text style={[styles.ageText, { color: Colors.white }]}>{user.age}</Text>
+              {user.isOnline && <OnlineBadge style={styles.marginLeft} />}
+              {isVerified(user.verification_status) && <VerifiedBadge style={styles.marginLeft} />}
+            </View>
+            {!!distanceInKm && (
+              <Text style={[styles.distanceInKm, { color: Colors.white }]}><MaterialCommunityIcons name="map-marker-outline" /> {distanceInKm} {t('km away')}</Text>
+            )}
+          </View>
+        </LinearGradient>
+      </View>
+    </TouchableWithoutFeedback>
+  );
+}
+
 export default function UserProfile({
   // userId,
   user,
@@ -365,46 +396,64 @@ export default function UserProfile({
               }}
             >
               {user.images.map((image: any, ix: number) => (
-                <TouchableWithoutFeedback
+                <CImage
                   key={image.imageId}
-                  style={{
-                    // width
-                    width: galleryWidth
-                  }}
+                  user={user}
+                  distanceInKm={distanceInKm}
                   onPress={() => {
                     openGallery(ix);
                   }}
                 >
-                  <View>
+                  <Image
+                    style={{
+                      // width,
+                      // aspectRatio: 1,
+                      width: galleryWidth,
+                      height: galleryH
+                    }}
+                    source={{ uri: image.uri_big }}
+                  />
+                </CImage>
+                // <TouchableWithoutFeedback
+                //   key={image.imageId}
+                //   style={{
+                //     // width
+                //     width: galleryWidth
+                //   }}
+                //   onPress={() => {
+                //     console.log('-------')
+                //     openGallery(ix);
+                //   }}
+                // >
+                //   <View>
+                //     <Image
+                //       style={{
+                //         // width,
+                //         // aspectRatio: 1,
+                //         width: galleryWidth,
+                //         height: galleryH
+                //       }}
+                //       source={{ uri: image.uri_big }}
+                //     />
 
-                    <Image
-                      style={{
-                        // width,
-                        // aspectRatio: 1,
-                        width: galleryWidth,
-                        height: galleryH
-                      }}
-                      source={{ uri: image.uri_big }}
-                    />
-
-                    <LinearGradient
-                      colors={['transparent', 'transparent', 'transparent', 'rgba(0, 0, 0, 0.5)']}
-                      style={[styles.contRadius, styles.gradientContainer]}
-                    >
-                      <View style={styles.gradientCont}>
-                        <View style={styles.userInfoTextContainer}>
-                          <Text style={[styles.nameText, { color: Colors.white }]}>{user.name}</Text>
-                          <Text style={[styles.ageText, { color: Colors.white }]}>{user.age}</Text>
-                          {user.isOnline && <OnlineBadge style={styles.marginLeft} />}
-                          {isVerified(user.verification_status) && <VerifiedBadge style={styles.marginLeft} />}
-                        </View>
-                        {!!distanceInKm && (
-                          <Text style={[styles.distanceInKm, { color: Colors.white }]}><MaterialCommunityIcons name="map-marker-outline" /> {distanceInKm} {t('km away')}</Text>
-                        )}
-                      </View>
-                    </LinearGradient>
-                  </View>
-                </TouchableWithoutFeedback>
+                //     <LinearGradient
+                //       colors={['transparent', 'transparent', 'transparent', 'rgba(0, 0, 0, 0.5)']}
+                //       style={[styles.contRadius, styles.gradientContainer]}
+                //     >
+                //       <View style={styles.gradientCont}>
+                //         <View style={styles.userInfoTextContainer}>
+                //           <Text style={[styles.nameText, { color: Colors.white }]}>{user.name}</Text>
+                //           <Text style={[styles.ageText, { color: Colors.white }]}>{user.age}</Text>
+                //           {user.isOnline && <OnlineBadge style={styles.marginLeft} />}
+                //           {isVerified(user.verification_status) && <VerifiedBadge style={styles.marginLeft} />}
+                //         </View>
+                //         {!!distanceInKm && (
+                //           <Text style={[styles.distanceInKm, { color: Colors.white }]}><MaterialCommunityIcons name="map-marker-outline" /> {distanceInKm} {t('km away')}</Text>
+                //         )}
+                //       </View>
+                //     </LinearGradient>
+                //   </View>
+                // </TouchableWithoutFeedback>
               ))}
             </ScrollView>
 
@@ -437,41 +486,48 @@ export default function UserProfile({
           />
         )}
 
-        {user.images.length <= 0 && (<DefaultImage gender={user.gender} />)}
+        {/* {user.images.length <= 0 && (<DefaultImage gender={user.gender} />)} */}
+        {user.images.length <= 0 && (
+          <CImage user={user} distanceInKm={distanceInKm}>
+            <DefaultImage gender={user.gender} />
+          </CImage>
+        )}
 
         <View>
-          <View style={styles.userInfoContainer}>
-            {/* <View style={styles.userInfoTextContainer}>
+          {user.work && user.education && user.description && (
+            <View style={styles.userInfoContainer}>
+              {/* <View style={styles.userInfoTextContainer}>
               <Text style={styles.nameText}>{user.name}</Text>
               <Text style={styles.ageText}>{user.age}</Text>
               {user.isOnline && <OnlineBadge style={styles.marginLeft} />}
               {isVerified(user.verification_status) && <VerifiedBadge style={styles.marginLeft} />}
             </View> */}
-            {user.work && (
-              <View style={styles.userTitleContainer}>
-                <MaterialCommunityIcons name="briefcase" />
-                <Text style={[styles.userTitleText, styles.marginLeft]}>{user.work}</Text>
-              </View>
-            )}
-            {user.education && (
-              <View style={styles.userTitleContainer}>
-                <MaterialCommunityIcons name="school" />
-                <Text style={[styles.userTitleText, styles.marginLeft]}>{user.education}</Text>
-              </View>
-            )}
+              {user.work && (
+                <View style={styles.userTitleContainer}>
+                  <MaterialCommunityIcons name="briefcase" />
+                  <Text style={[styles.userTitleText, styles.marginLeft]}>{user.work}</Text>
+                </View>
+              )}
+              {user.education && (
+                <View style={styles.userTitleContainer}>
+                  <MaterialCommunityIcons name="school" />
+                  <Text style={[styles.userTitleText, styles.marginLeft]}>{user.education}</Text>
+                </View>
+              )}
 
-            {/* {!!distanceInKm && (
+              {/* {!!distanceInKm && (
               <Text style={styles.distanceInKm}><MaterialCommunityIcons name="map-marker-outline" /> {distanceInKm} {t('km away')}</Text>
             )} */}
 
-            {user.description && (
-              <View style={styles.descriptionContainer}>
-                <ProfileItemHeading>{t('About')}</ProfileItemHeading>
+              {user.description && (
+                <View style={styles.descriptionContainer}>
+                  <ProfileItemHeading>{t('About')}</ProfileItemHeading>
 
-                <Text>{user.description}</Text>
-              </View>
-            )}
-          </View>
+                  <Text>{user.description}</Text>
+                </View>
+              )}
+            </View>
+          )}
 
           {info.length > 0 && (
             <View style={styles.sectionContainer}>

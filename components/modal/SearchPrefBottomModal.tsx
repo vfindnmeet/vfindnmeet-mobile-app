@@ -1,18 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { Dimensions, Modal, Text, TouchableWithoutFeedback, View } from 'react-native';
 import EStyleSheet from 'react-native-extended-stylesheet';
-import { ActivityIndicator, Button, TextInput } from 'react-native-paper';
+import { ActivityIndicator, Button } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
-import { LOADER_SIZE } from '../../constants';
+import { LOADER_SIZE, MAIN_COLOR } from '../../constants';
 import { useIsMounted } from '../../hooks/useIsMounted';
 import { getSearchPreferences, updateSearchPreferences } from '../../services/api';
 import { setSearchPref } from '../../store/actions/searchPref';
 import { getTokenSelector } from '../../store/selectors/auth';
-import { arrayToOptions, handleError, retryHttpRequest, throwErrorIfErrorStatusCode } from '../../utils';
+import { handleError, retryHttpRequest, throwErrorIfErrorStatusCode } from '../../utils';
 import BottomModal from '../BottomModal';
 import ItemHeading from '../profileInfo/ItemHeading';
+import MultiSlider from '@ptomasroos/react-native-multi-slider';
 
+const { width } = Dimensions.get('screen');
+// export const SLIDER_MARGIN_SIZE = width / 12; // 32
+export const SLIDER_MARGIN_SIZE = width / 19; // ~20
+// alert(SLIDER_MARGIN_SIZE)
 const styles = EStyleSheet.create({
   loadingContainer: {
     display: 'flex',
@@ -24,20 +29,48 @@ const styles = EStyleSheet.create({
   container: {
     padding: '10rem'
   },
+  labelContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between'
+  },
   label: {
     // fontSize: 20,
     fontSize: '15rem',
     fontWeight: 'bold'
   },
+  unitText: {
+    fontWeight: 'bold'
+  },
   sectionContainer: {
-    marginBottom: '10rem',
+    marginBottom: '10rem'
+  },
+  sliderSelected: {
+    backgroundColor: MAIN_COLOR,
+    padding: 2,
+    marginTop: -1
+  },
+  sliderMarker: {
+    backgroundColor: MAIN_COLOR,
+    width: '20rem',
+    height: '20rem',
+    borderRadius: 200,
   }
 });
 
+function CustomSliderMarker() {
+  return (
+    <View style={styles.sliderMarker} />
+  );
+}
+
 export default function SearchPrefBottomModal({ show, onHide }: any) {
-  const [fromAge, setFromAge] = useState('');
-  const [toAge, setToAge] = useState('');
-  const [distance, setDistance] = useState('');
+  // const [fromAge, setFromAge] = useState('');
+  // const [toAge, setToAge] = useState('');
+  // const [distance, setDistance] = useState('');
+  const [fromAge, setFromAge] = useState(18);
+  const [toAge, setToAge] = useState(70);
+  const [distance, setDistance] = useState(0);
   const [income, setIncome] = useState('high');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -52,9 +85,10 @@ export default function SearchPrefBottomModal({ show, onHide }: any) {
 
   useEffect(() => {
     if (show) {
-      setFromAge('');
-      setToAge('');
-      setDistance('');
+      // setFromAge('');
+      // setToAge('');
+      // setDistance('');
+      // setDistance();
       setIncome('');
 
       setLoading(true);
@@ -69,9 +103,14 @@ export default function SearchPrefBottomModal({ show, onHide }: any) {
         .then(result => {
           // console.log('SEARCH PREF:');
           // console.log(JSON.stringify(result, null, 2));
-          setFromAge(result.fromAge.toString());
-          setToAge(result.toAge.toString());
-          setDistance(result.distance.toString());
+          // setFromAge(result.fromAge.toString());
+          // setToAge(result.toAge.toString());
+          setFromAge(result.fromAge);
+          setToAge(result.toAge);
+          // setFromAge(21);
+          // setToAge(52);
+          // setDistance(result.distance.toString());
+          setDistance(result.distance);
           setIncome(result.income);
 
           // dispatch(setSearchPref(result));
@@ -96,45 +135,49 @@ export default function SearchPrefBottomModal({ show, onHide }: any) {
       )}
       {!loading && (
         <View style={styles.container}>
-          {/* <Text style={{
-          fontSize: 30,
-          fontWeight: 'bold',
-          textAlign: 'center',
-          // marginBottom: 15
-        }}>{t('Search preference')}</Text> */}
           <ItemHeading style={{ padding: 0 }} onHide={onHide}>{t('Search preference')}</ItemHeading>
           <View style={styles.sectionContainer}>
-            <Text style={styles.label}>{t('Radius')}:</Text>
-            <TextInput
-              mode="outlined"
-              placeholder={t('Search radius in KM')}
-              value={distance}
-              onChangeText={setDistance}
+            <View style={styles.labelContainer}>
+              <Text style={styles.label}>{t('Radius')}:</Text>
+              <Text style={styles.unitText}>{distance}</Text>
+            </View>
+            <MultiSlider
+              selectedStyle={styles.sliderSelected}
+              sliderLength={width - SLIDER_MARGIN_SIZE}
+              max={200}
+              values={[distance]}
+              onValuesChange={(values: number[]) => {
+                console.log(values);
+                setDistance(values[0]);
+              }}
+              customMarker={() => <CustomSliderMarker />}
             />
           </View>
           <View style={styles.sectionContainer}>
-            <Text style={styles.label}>{t('Age preference:')}</Text>
-            <View style={{
-              display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'center'
-            }}>
-              <TextInput
-                style={{ flex: 1 }}
-                mode="outlined"
-                placeholder={t('From')}
-                value={fromAge}
-                onChangeText={setFromAge}
-              />
-              <Text style={{ marginLeft: 10, marginRight: 10 }}>-</Text>
-              <TextInput
-                style={{ flex: 1 }}
-                mode="outlined"
-                placeholder={t('To')}
-                value={toAge}
-                onChangeText={setToAge}
-              />
+            <View style={styles.labelContainer}>
+              <Text style={styles.label}>{t('Age preference')}:</Text>
+              <Text style={styles.unitText}>{fromAge} - {toAge}</Text>
             </View>
+            <MultiSlider
+              selectedStyle={styles.sliderSelected}
+              sliderLength={width - SLIDER_MARGIN_SIZE}
+              min={18}
+              max={70}
+              values={[+fromAge, +toAge]}
+              enabledTwo={true}
+              onValuesChange={(values: number[]) => {
+                console.log(values);
+                setFromAge(values[0]);
+                setToAge(values[1]);
+              }}
+              isMarkersSeparated={true}
+              customMarkerLeft={(e) => {
+                return (<CustomSliderMarker />)
+              }}
+              customMarkerRight={(e) => {
+                return (<CustomSliderMarker />)
+              }}
+            />
           </View>
           {/* <View style={{
                   marginBottom: 10

@@ -22,6 +22,12 @@ import BottomModal from "../BottomModal";
 import EditOptions from "./EditOptions";
 import ItemHeading from "./ItemHeading";
 
+import {
+  WheelPicker,
+  TimePicker,
+  DatePicker
+} from "react-native-wheel-picker-android";
+
 const styles = EStyleSheet.create({
   container: {
     marginTop: '10rem',
@@ -85,6 +91,11 @@ const styles = EStyleSheet.create({
   }
 });
 
+const heightOptions: number[] = [];
+for (let i = 100; i <= 250; i += 2) {
+  heightOptions.push(i);
+}
+
 const isValidHeight = (height: number) => 50 <= height && height <= 300;
 
 export default function Info({ info }: any) {
@@ -92,6 +103,8 @@ export default function Info({ info }: any) {
   const dispatch = useDispatch();
   const token = useSelector(getTokenSelector);
   const { t } = useTranslation();
+
+  const [selectedItem, setSelectedItem] = useState<number>(1);
 
   const [editingHeight, setEditingHeight] = useState(false);
   const [editingBody, setEditingBody] = useState(false);
@@ -195,7 +208,9 @@ export default function Info({ info }: any) {
         <ItemHeading>{t('Info')}</ItemHeading>
 
         <EditInfoItem title={t('Height')} icon='human-male-height' value={info.height ? `${info.height} cm` : t('I rather not say')} onPress={() => {
-          setHeight(info.height ? info.height.toString() : '');
+          // setHeight(info.height ? info.height.toString() : '');
+          const ix = heightOptions.indexOf(+info.height);
+          setSelectedItem(ix);
           setHeightTouched(false);
           setHeightError('');
           setEditingHeight(true);
@@ -255,7 +270,27 @@ export default function Info({ info }: any) {
           justifyContent: 'center',
           alignItems: 'center'
         }}>
-          <TextInput
+          {/* <Text>Selected position: {selectedItem}</Text> */}
+          <WheelPicker
+            style={{
+              width: '80%',
+              height: 150,
+            }}
+            selectedItem={selectedItem}
+            data={heightOptions.map(i => `${i} cm`)}
+            onItemSelected={(selected: number) => {
+              setSelectedItem(selected);
+              setHeightTouched(true);
+              setHeight(heightOptions[selected].toString());
+              console.log('sel:', selected, heightOptions[selected]);
+            }}
+            selectedItemTextFontFamily=""
+            itemTextFontFamily=""
+            itemTextSize={25}
+            selectedItemTextSize={25}
+          // itemTextColor={Colors.red100}
+          />
+          {/* <TextInput
             multiline={false}
             maxLength={3}
             keyboardType="numeric"
@@ -274,7 +309,7 @@ export default function Info({ info }: any) {
             }}
             style={styles.heightInp}
           ></TextInput>
-          <Text style={{ marginLeft: 5 }}>cm</Text>
+          <Text style={{ marginLeft: 5 }}>cm</Text> */}
         </View>
         <View>
           {heightTouched && !!heightError && <HelperText type="error">{t(heightError)}</HelperText>}

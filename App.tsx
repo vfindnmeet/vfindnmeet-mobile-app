@@ -3,7 +3,6 @@ import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider as ReduxProvider } from 'react-redux';
 import { store } from './store/store';
-import WsContextProvider from './store/WsContext';
 import Main from './Main';
 import './i18n/i18n.config';
 import { MAIN_COLOR } from './constants';
@@ -44,13 +43,11 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <ReduxProvider store={store}>
-        <WsContextProvider>
-          <NavigationContainer>
-            <PaperProvider theme={theme}>
-              <Main />
-            </PaperProvider>
-          </NavigationContainer>
-        </WsContextProvider>
+        <NavigationContainer>
+          <PaperProvider theme={theme}>
+            <Main />
+          </PaperProvider>
+        </NavigationContainer>
       </ReduxProvider>
     </SafeAreaProvider>
   );

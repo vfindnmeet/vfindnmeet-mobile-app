@@ -1,12 +1,78 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { Dimensions, View } from 'react-native';
+import EStyleSheet from 'react-native-extended-stylesheet';
 import { HelperText, Text, TextInput } from 'react-native-paper';
+import { WheelPicker } from 'react-native-wheel-picker-android';
 
-export default function BirthdayPicker({ birthday, setBirthday }: any) {
-  const [day, setDay] = useState<number | null>(new Date(birthday).getDate());
-  const [month, setMonth] = useState<number | null>(new Date(birthday).getMonth() + 1);
-  const [year, setYear] = useState<number | null>(new Date(birthday).getFullYear());
+const styles = EStyleSheet.create({
+  pickerItemContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    width: '30%'
+  },
+  pickerText: {
+    textAlign: 'center',
+    fontSize: '20rem'
+  },
+  pickerWheel: {
+    width: '100%',
+    height: '150rem',
+  }
+});
+
+const monthOptions = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+
+const yearOptions: number[] = [];
+const curYear = new Date().getFullYear();
+// alert(curYear)
+for (let i = curYear - 18, j = 0; j <= 100; i--, j++) {
+  yearOptions.push(i);
+}
+
+const daysFor = (month: number | null, year: number | null) => {
+  if (!month || !year) return [];
+  const date = new Date();
+  date.setFullYear(year);
+  date.setMonth(month);
+  date.setDate(0)
+  const days = date.getDate();
+
+  const r = [];
+  for (let i = 1; i <= days; i++) {
+    r.push(i);
+  }
+
+  return r;
+};
+
+const { width } = Dimensions.get('screen');
+export const PICKER_TEXT_SIZE = width / 15; // ~25
+
+const isValidDate = (date: any) => {
+  return date instanceof Date && !isNaN(date as any);
+}
+
+export default function BirthdayPicker({ birthday, setBirthday, onError }: any) {
+  const d = new Date(birthday);
+  const validDate = isValidDate(d);
+
+  const [day, setDay] = useState<number | null>(validDate ? d.getDate() : 0);
+  const [month, setMonth] = useState<number | null>(validDate ? d.getMonth() + 1 : 0);
+  const [year, setYear] = useState<number | null>(validDate ? d.getFullYear() : 0);
   const [error, setError] = useState<string | null>(null);
   const { t } = useTranslation();
 
@@ -54,12 +120,17 @@ export default function BirthdayPicker({ birthday, setBirthday }: any) {
   useEffect(() => {
     const error = getError();
     setError(error);
+    onError && onError(error);
 
     if (day === null || month === null || year === null) {
       return;
     }
 
-    setBirthday(`${day < 10 ? `0${day}` : day}-${month < 10 ? `0${month}` : month}-${year}`);
+    const bd = `${day < 10 ? `0${day}` : day}-${month < 10 ? `0${month}` : month}-${year}`;
+    // const bd = `${year}-${month < 10 ? `0${month}` : month}-${day < 10 ? `0${day}` : day}`;
+    setBirthday(bd);
+
+    console.log(bd)
   }, [day, month, year]);
 
   // const onNextStep = () => {
@@ -73,6 +144,72 @@ export default function BirthdayPicker({ birthday, setBirthday }: any) {
   //   // props.setBirthday(`${day < 10 ? `0${day}` : day}-${month < 10 ? `0${month}` : month}-${year}`);
   //   props.nextStep();
   // };
+
+  const [selectedDay, setSelectedDay] = useState<any>(day);
+  const [selectedMonth, setSelectedMonth] = useState<any>(month);
+  const [selectedYear, setSelectedYear] = useState<any>(yearOptions.indexOf(year as number));
+
+  return (
+    <View style={{
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-between'
+    }}>
+      <View style={styles.pickerItemContainer}>
+        <Text style={styles.pickerText}>{t('Day')}</Text>
+        <WheelPicker
+          style={styles.pickerWheel}
+          selectedItem={selectedDay}
+          data={['-', ...daysFor(month, year)].map(i => i.toString())}
+          onItemSelected={(selected: number) => {
+            setSelectedDay(selected);
+            setDay(selected);
+            // console.log('d:', selected);
+          }}
+          selectedItemTextFontFamily=""
+          itemTextFontFamily=""
+          itemTextSize={PICKER_TEXT_SIZE}
+          selectedItemTextSize={PICKER_TEXT_SIZE}
+        />
+      </View>
+
+      <View style={styles.pickerItemContainer}>
+        <Text style={styles.pickerText}>{t('Month')}</Text>
+        <WheelPicker
+          style={styles.pickerWheel}
+          selectedItem={selectedMonth}
+          data={['-', ...monthOptions].map(i => t(i))}
+          onItemSelected={(selected: number) => {
+            setSelectedMonth(selected);
+            setMonth(selected);
+            // console.log('m:', selected);
+          }}
+          selectedItemTextFontFamily=""
+          itemTextFontFamily=""
+          itemTextSize={PICKER_TEXT_SIZE}
+          selectedItemTextSize={PICKER_TEXT_SIZE}
+        />
+      </View>
+
+      <View style={styles.pickerItemContainer}>
+        <Text style={styles.pickerText}>{t('Year')}</Text>
+        <WheelPicker
+          style={styles.pickerWheel}
+          selectedItem={selectedYear}
+          data={['-', ...yearOptions].map(i => i.toString())}
+          onItemSelected={(selected: number) => {
+            setSelectedYear(selected);
+            setYear(yearOptions[selected - 1]);
+            // console.log('y:', yearOptions[selected - 1]);
+          }}
+          selectedItemTextFontFamily=""
+          itemTextFontFamily=""
+          itemTextSize={PICKER_TEXT_SIZE}
+          selectedItemTextSize={PICKER_TEXT_SIZE}
+        />
+      </View>
+    </View>
+  );
 
   return (
     <>

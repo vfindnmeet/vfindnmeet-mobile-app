@@ -1,11 +1,30 @@
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableWithoutFeedback, View } from 'react-native';
+import EStyleSheet from 'react-native-extended-stylesheet';
 import {
   Button as MatButton,
-  RadioButton
+  Colors
 } from "react-native-paper";
 import CRadioButton from '../CRadioButton';
+
+const styles = EStyleSheet.create({
+  container: {
+    padding: '15rem'
+  },
+  titleText: {
+    textAlign: 'center',
+    fontSize: '20rem'
+  },
+  button: {
+    width: '100%',
+    marginTop: '15rem',
+    borderRadius: '20rem'
+  },
+  buttonLabel: {
+    color: Colors.white
+  }
+});
 
 export default function OnboardingGender(props: any) {
   const { t } = useTranslation();
@@ -20,8 +39,8 @@ export default function OnboardingGender(props: any) {
   const setFemale = useCallback(() => setGender('female'), []);
 
   return (
-    <View>
-      <Text style={{ textAlign: 'center', fontSize: 20 }}>{t('What\'s your gender?')}</Text>
+    <View style={styles.container}>
+      <Text style={styles.titleText}>{t('What\'s your gender?')}</Text>
       <View>
         <CRadioButton
           value="male"
@@ -68,7 +87,8 @@ export default function OnboardingGender(props: any) {
 
       <MatButton
         disabled={gender === null}
-        style={{ width: '100%', marginTop: 15 }}
+        style={styles.button}
+        labelStyle={styles.buttonLabel}
         uppercase={false}
         mode="contained"
         onPress={onNextStep}

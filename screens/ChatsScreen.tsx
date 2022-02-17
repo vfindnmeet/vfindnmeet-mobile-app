@@ -37,6 +37,13 @@ const styles = EStyleSheet.create({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
+  },
+  noChatsTitle: {
+    fontSize: '35rem',
+    fontWeight: 'bold'
+  },
+  noChatsText: {
+    fontSize: '17rem',
   }
 });
 
@@ -125,15 +132,33 @@ export default function ChatsScreen(props: any) {
   const matches: any[] = chats.filter((chat: any) => !chat.lastMessage);
   const messages: any[] = chats.filter((chat: any) => !!chat.lastMessage);
 
+  if (chats.length <= 0) {
+    return (
+      <SafeAreaView style={{
+        flex: 1
+      }}>
+        <View style={{
+          flex: 1,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}>
+          <Text style={styles.noChatsTitle}>{t('No chats yet.')}</Text>
+          <Text style={styles.noChatsText}>{t('Get matches in order to chat.')}</Text>
+        </View>
+
+        <CBottomTabs />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={{
       flex: 1
     }}>
-      <View
-        style={{
-          flex: 1,
-        }}
-      >
+      <View style={{
+        flex: 1,
+      }}>
         <View>
           <ItemHeading size={HEADING_SIZE} style={styles.headingMargin}>{t('New Matches')}</ItemHeading>
           <ScrollView

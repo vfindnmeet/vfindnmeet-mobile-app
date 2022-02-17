@@ -6,6 +6,50 @@ import { useSelector } from 'react-redux';
 import { getIntroMessageModalDataSelector } from '../../store/selectors/modal';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { GALELRY_ADD_ICON_SIZE } from '../../constants';
+import EStyleSheet from 'react-native-extended-stylesheet';
+
+const styles = EStyleSheet.create({
+  container: {
+    flex: 1
+  },
+  backdrop: {
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    flex: 1,
+    display: 'flex',
+    justifyContent: 'center',
+    position: 'relative',
+    padding: '15rem'
+  },
+  modal: {
+    backgroundColor: '#fff',
+    padding: '10rem',
+    borderRadius: '5rem'
+  },
+  titleContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  titleText: {
+    fontSize: '25rem'
+  },
+  messageText: {
+    padding: '10rem',
+    textAlign: 'center',
+    color: 'gray',
+    fontSize: '15rem'
+  },
+  buttonsContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: '5rem'
+  },
+  button: {
+    margin: '2rem'
+  }
+});
 
 export default function ErrorDialog({ show, onHide }: any) {
   const data = useSelector(getIntroMessageModalDataSelector);
@@ -21,57 +65,22 @@ export default function ErrorDialog({ show, onHide }: any) {
       animationType="slide"
       transparent={true}
       visible={show}
-      onDismiss={() => {
-        console.log('ON DISMISS');
-      }}
     >
-      <TouchableWithoutFeedback
-        style={{ flex: 1 }}
-      >
-        <View style={{
-          backgroundColor: 'rgba(0, 0, 0, 0.6)',
-          flex: 1,
-          display: 'flex',
-          justifyContent: 'center',
-          position: 'relative',
-          padding: 15
-        }}>
+      <TouchableWithoutFeedback style={styles.container}>
+        <View style={styles.backdrop}>
           <TouchableWithoutFeedback>
-            <View style={{
-              backgroundColor: '#fff',
-              padding: 10,
-              borderRadius: 5
-            }}>
+            <View style={styles.modal}>
               <View>
                 <View>
-                  <View style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                  }}>
+                  <View style={styles.titleContainer}>
                     <MaterialCommunityIcons name="alert" size={GALELRY_ADD_ICON_SIZE} />
-                    <Text style={{
-                      fontSize: 25
-                    }}>{t('Error')}</Text>
+                    <Text style={styles.titleText}>{t('Error')}</Text>
                   </View>
-                  <Text style={{
-                    padding: 10,
-                    textAlign: 'center',
-                    color: 'gray',
-                    fontSize: 15
-                  }}>{t(data.message)}</Text>
+                  <Text style={styles.messageText}>{t(data.message)}</Text>
                 </View>
-                <View
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    justifyContent: 'center',
-                    marginTop: 5
-                  }}
-                >
+                <View style={styles.buttonsContainer}>
                   <Button
-                    style={{ margin: 2 }}
+                    style={styles.button}
                     mode="text"
                     uppercase={false}
                     onPress={() => {

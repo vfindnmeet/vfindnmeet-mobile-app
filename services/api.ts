@@ -200,13 +200,13 @@ export const setAuthInfo = async ({
   lat?: number;
   lon?: number;
   pushToken?: string | null;
-}) => {
+}, token: string) => {
   return fetch(config.API_ENDPOINT + 'auth-info', {
     method: 'POST',
-    headers: {
+    headers: addAuthHeader(token, {
       Accept: 'application/json',
       'Content-Type': 'application/json'
-    },
+    }),
     body: JSON.stringify({ lat, lon, pushToken })
   });
 }

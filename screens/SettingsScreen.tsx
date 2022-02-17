@@ -21,6 +21,7 @@ import { MAIN_COLOR, STORAGE_LANG_KEY } from '../constants';
 import { showDeactivateModal } from '../store/actions/modal';
 import { logOutUser } from '../store/actions/auth';
 import PageLoader from '../components/common/PageLoader';
+import { WheelPicker } from "react-native-wheel-picker-android";
 
 export default function SettingsScreen(props: any) {
   const isMounted = useIsMounted();

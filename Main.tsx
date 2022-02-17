@@ -17,6 +17,7 @@ import useGetStorageUser from './hooks/useGetStorageUser';
 import messaging from '@react-native-firebase/messaging';
 import { getExpoPushNotificationToken, retryHttpRequest } from './utils';
 import { registerPushNotificationToken } from './services/api';
+import WsContextProvider from './store/WsContext';
 
 function usePushToken() {
   const token = useSelector(getTokenSelector);
@@ -51,18 +52,38 @@ function usePushToken() {
   }, [token]);
 }
 
+function LoggedIn() {
+  const token = useSelector(getTokenSelector);
+
+  usePushNotification();
+  useHandleWsMessage();
+  useSyncLocation(token);
+  // useFetchOnboardingState(token);
+
+  usePushToken();
+
+  return (
+    <WsContextProvider>
+      <AppScreen />
+    </WsContextProvider>
+  );
+}
+
 export default function Main() {
   const onboardingData = useSelector(getOnboardingSelector);
   const onboardingDataLoading = useSelector(getOnboardingLoadingSelector);
   const token = useSelector(getTokenSelector);
   const loadingToken = useGetStorageUser();
 
-  usePushNotification();
-  useHandleWsMessage();
-  useSyncLocation(token);
+  console.log('onboardingData', onboardingData);
+  console.log('onboardingDataLoading', onboardingDataLoading);
+
+  // usePushNotification();
+  // useHandleWsMessage();
+  // useSyncLocation(token);
   useFetchOnboardingState(token);
 
-  usePushToken();
+  // usePushToken();
 
   if (loadingToken) {
     return (
@@ -72,28 +93,17 @@ export default function Main() {
 
   if (!token) {
     return (
-      <AuthScreen></AuthScreen>
+      <AuthScreen />
     );
   }
 
-  // const onboardingDataLoading = onboardingData === null;
-  // console.log('onboardingDataLoading:', onboardingDataLoading);
   if (onboardingDataLoading) {
-    // console.log('onboardingDataLoading');
     return (
-      <SafeAreaView style={{
-        flex: 1,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <ActivityIndicator size={LOADER_SIZE} />
-      </SafeAreaView>
+      <PageLoader fullScreen={true} />
     );
   }
 
   const isOnboarding = !onboardingData.completed_at;
-  // console.log('isOnboarding:', isOnboarding);
   if (isOnboarding) {
     return (
       <OnboardingScreen curStep={onboardingData?.step ?? 1} />
@@ -101,6 +111,6 @@ export default function Main() {
   }
 
   return (
-    <AppScreen />
+    <LoggedIn />
   );
 }

@@ -77,6 +77,8 @@ export default function SignUpScreen({ navigation }: any) {
         dispatch(setLoggedUser(result));
       })
       .catch(e => {
+        if (!isMounted.current) return;
+
         setErrorMessage(e.message);
         // setLoading(false);
       })

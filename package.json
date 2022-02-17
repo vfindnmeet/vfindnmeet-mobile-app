@@ -7,6 +7,7 @@
     "eject": "expo eject"
   },
   "dependencies": {
+    "@ptomasroos/react-native-multi-slider": "^2.2.2",
     "@react-native-async-storage/async-storage": "^1.15.13",
     "@react-native-community/geolocation": "^2.0.2",
     "@react-native-firebase/app": "^14.4.0",
@@ -15,7 +16,6 @@
     "@react-navigation/material-bottom-tabs": "^6.0.9",
     "@react-navigation/native": "^6.0.6",
     "@react-navigation/stack": "^6.0.11",
-    "@taoqf/react-native-wheel-picker": "^1.0.6",
     "expo": "~43.0.2",
     "expo-camera": "~12.0.3",
     "expo-dev-client": "~0.6.3",
@@ -42,6 +42,7 @@
     "react-native-screens": "~3.8.0",
     "react-native-vector-icons": "^9.0.0",
     "react-native-web": "0.17.1",
+    "react-native-wheel-picker-android": "^2.0.6",
     "react-navigation": "^4.4.4",
     "react-redux": "^7.2.6",
     "redux": "^4.1.2",
