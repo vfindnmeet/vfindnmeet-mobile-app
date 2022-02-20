@@ -229,6 +229,9 @@ dependencies {
 
     implementation project(path: ":@react-native-firebase_messaging")
     compile project(':react-native-wheel-picker-android')
+    compile project(':WebRTCModule')
+    compile "com.android.support:support-v4:28.0.0"
+    compile(project(':react-native-incall-manager'))
 
     if (enableHermes) {
         debugImplementation files(new File(["node", "--print", "require.resolve('hermes-engine/package.json')"].execute(null, rootDir).text.trim(), "../android/hermes-debug.aar"))

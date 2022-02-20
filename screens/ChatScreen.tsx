@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { View, Text, TextInput, Image, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, TextInput, Image, TouchableWithoutFeedback, Dimensions } from 'react-native';
 import { ActivityIndicator, Colors, IconButton } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
@@ -26,11 +26,13 @@ import { shouldShowIcebreakerModalSelector } from '../store/selectors/modal';
 import BackButton from '../navigation/BackButton';
 import { BIG_ICON_SIZE, ICON_SIZE } from '../constants';
 import EStyleSheet from 'react-native-extended-stylesheet';
+import { WsContext } from '../store/WsContext';
 
 const styles = EStyleSheet.create({
   userContainer: {
     display: 'flex',
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center'
   },
   userInnerContainer: {
@@ -98,7 +100,12 @@ const styles = EStyleSheet.create({
     marginLeft: '5rem',
     padding: '5rem'
   },
+  marginLeft: {
+    marginLeft: '5rem'
+  }
 });
+
+const { width, height } = Dimensions.get('screen');
 
 export default function ChatScreen({ route, navigation }: any) {
   const dispatch = useDispatch();
@@ -122,6 +129,8 @@ export default function ChatScreen({ route, navigation }: any) {
   const [message, setMessage] = useState('');
   const [image, setImage] = useState<{ imageId: string; uri_big: string; uri_small: string } | null>(null);
   const [imageLoading, setImageLoading] = useState<boolean>(false);
+
+  const { sendMessage } = useContext(WsContext);
 
   useEffect(() => {
     retryHttpRequest(() => {
@@ -158,20 +167,41 @@ export default function ChatScreen({ route, navigation }: any) {
       <View style={{ flex: 1 }}>
         <SafeAreaView>
           <View style={styles.userContainer}>
-            <BackButton />
-            <TouchableWithoutFeedback
-              onPress={() => navigation.navigate('Profile', { userId: user.id })}
-            >
-              <View style={styles.userInnerContainer}>
-                <Image
-                  style={styles.image}
-                  source={{ uri: user.profileImage ?? getDefaultImage(user.gender).uri }}
-                />
-                <Text style={styles.userName}>{user.name}</Text>
-                {user.isOnline && <OnlineBadge style={{ marginLeft: 5 }} />}
-                {isVerified(user.verification_status) && <VerifiedBadge style={{ marginLeft: 5 }} />}
-              </View>
-            </TouchableWithoutFeedback>
+            <View style={{
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center'
+            }}>
+              <BackButton />
+              <TouchableWithoutFeedback
+                onPress={() => navigation.navigate('Profile', { userId: user.id })}
+              >
+                <View style={styles.userInnerContainer}>
+                  <Image
+                    style={styles.image}
+                    source={{ uri: user.profileImage ?? getDefaultImage(user.gender).uri }}
+                  />
+                  <Text style={styles.userName}>{user.name}</Text>
+                  {user.isOnline && <OnlineBadge style={styles.marginLeft} />}
+                  {isVerified(user.verification_status) && <VerifiedBadge style={styles.marginLeft} />}
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+
+            <IconButton
+              icon="video"
+              onPress={() => {
+                // sendMessage('call', { calledId: targetId, width, height });
+                // setCalledId(targetId);
+                // setCallerId(loggedUserId);
+                sendMessage('call', { calledId: user.id, width, height });
+
+                navigation.navigate('Call', {
+                  calledId: user.id,
+                  callerId: loggedUserId,
+                });
+              }}
+            />
           </View>
         </SafeAreaView>
 

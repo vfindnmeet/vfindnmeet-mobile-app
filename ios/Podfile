@@ -13,6 +13,8 @@ target 'vimeet' do
 
   pod 'expo-dev-launcher', path: '../node_modules/expo-dev-launcher', :configurations => :debug
   pod 'expo-dev-menu', path: '../node_modules/expo-dev-menu', :configurations => :debug
+  pod 'react-native-webrtc', :path => '../node_modules/react-native-webrtc'
+  pod 'ReactNativeIncallManager', :path => '../node_modules/react-native-incall-manager'
   use_react_native!(
     :path => config[:reactNativePath],
     :hermes_enabled => podfile_properties['expo.jsEngine'] == 'hermes'

@@ -200,11 +200,11 @@ export default function WsContextProvider(props: any) {
     };
   }, [token]);
 
-  useEffect(() => {
-    return () => {
-      if (wsRef.current) wsRef.current.close();
-    };
-  }, []);
+  // useEffect(() => {
+  //   return () => {
+  //     if (wsRef.current) wsRef.current.close();
+  //   };
+  // }, []);
 
   const sendMessage = (type: string, msg: any = {}) => {
     sendWsMessage(wsRef.current, type, msg);

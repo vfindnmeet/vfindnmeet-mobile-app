@@ -1,23 +1,21 @@
 import React, { useEffect } from 'react';
 import { AppScreen, AuthScreen } from './navigation/Navigator1';
-import { ActivityIndicator } from 'react-native-paper';
 import OnboardingScreen from './screens/OnboardingScreen';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
-import { getTokenSelector } from './store/selectors/auth';
+import { getLoggedUserIdSelector, getTokenSelector } from './store/selectors/auth';
 import { getOnboardingLoadingSelector, getOnboardingSelector } from './store/selectors/onboarding';
 import usePushNotification from './hooks/usePushNotification';
-import { LOADER_SIZE } from './constants';
 import PageLoader from './components/common/PageLoader';
 import useSyncLocation from './hooks/useSyncLocation';
 import useHandleWsMessage from './hooks/useHandleWsMessage';
 import useFetchOnboardingState from './hooks/useFetchOnboardingState';
 import useGetStorageUser from './hooks/useGetStorageUser';
-
 import messaging from '@react-native-firebase/messaging';
-import { getExpoPushNotificationToken, retryHttpRequest } from './utils';
+import { retryHttpRequest } from './utils';
 import { registerPushNotificationToken } from './services/api';
 import WsContextProvider from './store/WsContext';
+import useOnMessage from './hooks/useOnMessage';
+import { useNavigation } from '@react-navigation/native';
 
 function usePushToken() {
   const token = useSelector(getTokenSelector);
@@ -52,6 +50,36 @@ function usePushToken() {
   }, [token]);
 }
 
+function useVideoCallHandle() {
+  const navigation: any = useNavigation();
+  const loggedUserId = useSelector(getLoggedUserIdSelector);
+
+  useOnMessage(({ type, payload }: { type: string; payload: any; }) => {
+    switch (type) {
+      // logged user has accepted the call but from
+      // other WebSocket connection (another tab or app)
+      case 'call-accepted-oc':
+        // setIncommingCall(payload);
+
+        break;
+      case 'called':
+        // setIncommingCall(payload);
+        navigation.navigate('Call', {
+          calledId: loggedUserId,
+          callerId: payload.callerId,
+          remoteScreenDimension: {
+            width: payload.width,
+            height: payload.height,
+          }
+        });
+
+        break;
+      // case 'call-cancelled':
+      //   setIncommingCall(null);
+    }
+  });
+}
+
 function LoggedIn() {
   const token = useSelector(getTokenSelector);
 
@@ -59,6 +87,8 @@ function LoggedIn() {
   useHandleWsMessage();
   useSyncLocation(token);
   // useFetchOnboardingState(token);
+
+  useVideoCallHandle();
 
   usePushToken();
 

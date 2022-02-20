@@ -33,6 +33,7 @@ import PersonalityQuizScreen from '../screens/PersonalityQuizScreen';
 import IntroBottomModal from '../components/modal/IntroBottomModal';
 import IntroMessageBottomModal from '../components/modal/IntroMessageBottomModal';
 import SearchPrefBottomModal from '../components/modal/SearchPrefBottomModal';
+import CallScreen from '../screens/CallScreen';
 
 const AppStack = createStackNavigator();
 const AuthStack = createStackNavigator();
@@ -89,6 +90,14 @@ export const ChatStackScreen = () => (
       options={{
         headerShown: false,
         animationEnabled: false,
+      }}
+    />
+    <ChatStack.Screen
+      name="Call"
+      component={CallScreen}
+      options={{
+        headerShown: false,
+        animationEnabled: true,
       }}
     />
   </ChatStack.Navigator>
@@ -289,7 +298,7 @@ export const AppScreen = () => {
       />
 
       <BottomModal show={showPersonalityInfoModal} onHide={hidePersonalityInfoM}>
-        <PersonalityInfoBottomModal onHide={hidePersonalityInfoM}/>
+        <PersonalityInfoBottomModal onHide={hidePersonalityInfoM} />
       </BottomModal>
     </>
   );
