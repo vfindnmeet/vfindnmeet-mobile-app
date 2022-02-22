@@ -13,6 +13,8 @@ import { useTranslation } from 'react-i18next';
 import { LOADER_SIZE } from '../../constants';
 import { useNavigation } from '@react-navigation/native';
 import EStyleSheet from 'react-native-extended-stylesheet';
+import { setProfileScreenInfo } from '../../store/actions/profileInfo';
+import { getProfileInfoSelector } from '../../store/selectors/profileInfo';
 
 const RATIO = { width: 16, height: 14 };
 const RATIO_STR = `${RATIO.width}:${RATIO.height}`;
@@ -63,6 +65,7 @@ export default function Verify({ gender }: any) {
   const navigation: any = useNavigation();
 
   const loggedUserId = useSelector(getLoggedUserIdSelector);
+  const profileInfo = useSelector(getProfileInfoSelector);
   const token = useSelector(getTokenSelector);
   const { t } = useTranslation();
 
@@ -173,6 +176,10 @@ export default function Verify({ gender }: any) {
                   if (!isMounted.current) return;
 
                   setComplete(true);
+                  dispatch(setProfileScreenInfo({
+                    ...profileInfo,
+                    verification_status: 'pending'
+                  }));
                 })
                 .catch(err => {
                   handleError(err, dispatch);

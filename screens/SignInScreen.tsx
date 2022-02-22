@@ -26,6 +26,34 @@ import { useTranslation } from 'react-i18next';
 import LanguageBottomModal from '../components/LanguageBottomModal';
 import { STORAGE_LANG_KEY, STORAGE_LOGIN_DATA_KEY } from '../constants';
 import { useIsMounted } from '../hooks/useIsMounted';
+import EStyleSheet from 'react-native-extended-stylesheet';
+
+const styles = EStyleSheet.create({
+  container: {
+    padding: '25rem',
+    flex: 1
+  },
+  langContainer: {
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'row-reverse'
+  },
+  logoContainer: {
+    marginTop: '30rem',
+    marginBottom: '60rem',
+    textAlign: 'center'
+  },
+  marginTop: {
+    marginTop: '15rem'
+  },
+  button: {
+    width: '100%',
+    borderRadius: 1000,
+  },
+  buttonLabel: {
+    color: Colors.white
+  }
+});
 
 export default function SignInScreen({ navigation }: any) {
   const dispatch = useDispatch();
@@ -117,24 +145,16 @@ export default function SignInScreen({ navigation }: any) {
   }
 
   return (
-    <View style={{ padding: 25, flex: 1 }}>
+    <View style={styles.container}>
       <SafeAreaView>
-        <View style={{
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'row-reverse'
-        }}>
+        <View style={styles.langContainer}>
           <Button
             onPress={() => {
               setShowLangModal(true);
             }}
           >{lang}</Button>
         </View>
-        <Text style={{
-          marginTop: 30,
-          marginBottom: 60,
-          textAlign: 'center'
-        }}>
+        <Text style={styles.logoContainer}>
           APP_LOGO
         </Text>
       </SafeAreaView>
@@ -163,7 +183,7 @@ export default function SignInScreen({ navigation }: any) {
           setError('');
         }}
         secureTextEntry
-        style={{ marginTop: 15 }}
+        style={styles.marginTop}
         error={!!error} />
 
       {!!error && (<HelperText type="error">{t(error)}</HelperText>)}
@@ -171,20 +191,14 @@ export default function SignInScreen({ navigation }: any) {
       <MatButton
         disabled={loading}
         loading={loading}
-        labelStyle={{
-          color: Colors.white
-        }}
-        style={{
-          width: '100%',
-          marginTop: 15,
-          borderRadius: 1000,
-        }}
+        labelStyle={styles.buttonLabel}
+        style={[styles.marginTop, styles.button]}
         uppercase={false}
         mode="contained"
         onPress={onLogin}
       >{t('Login')}</MatButton>
 
-      <Text style={{ textAlign: 'center', marginTop: 10 }}>{t('Or')}</Text>
+      {/* <Text style={{ textAlign: 'center', marginTop: 10 }}>{t('Or')}</Text>
 
       <MatButton
         disabled={loading}
@@ -200,10 +214,10 @@ export default function SignInScreen({ navigation }: any) {
         }}
         mode="contained"
         onPress={onLogin}
-      >{t('Login With Google')}</MatButton>
+      >{t('Login With Google')}</MatButton> */}
 
       <MatButton
-        style={{ marginTop: 15 }}
+        style={styles.marginTop}
         mode="text"
         uppercase={false}
         disabled={loading}

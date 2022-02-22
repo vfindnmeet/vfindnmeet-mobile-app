@@ -17,6 +17,38 @@ import { useTranslation } from 'react-i18next';
 import LanguageBottomModal from '../components/LanguageBottomModal';
 import { STORAGE_LANG_KEY } from '../constants';
 import { useIsMounted } from '../hooks/useIsMounted';
+import EStyleSheet from 'react-native-extended-stylesheet';
+
+const styles = EStyleSheet.create({
+  container: {
+    padding: '25rem',
+    flex: 1
+  },
+  langContainer: {
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'row-reverse'
+  },
+  logoContainer: {
+    marginTop: '30rem',
+    marginBottom: '60rem',
+    textAlign: 'center'
+  },
+  marginTop: {
+    marginTop: '15rem'
+  },
+  button: {
+    width: '100%',
+    borderRadius: 1000,
+  },
+  buttonLabel: {
+    color: Colors.white
+  },
+  input: {
+    marginTop: '5rem'
+  }
+});
+
 
 export default function SignUpScreen({ navigation }: any) {
   const isMounted = useIsMounted();
@@ -120,24 +152,16 @@ export default function SignUpScreen({ navigation }: any) {
   }, [password, confirmPassword]);
 
   return (
-    <View style={{ padding: 25, flex: 1 }}>
+    <View style={styles.container}>
       <SafeAreaView>
-        <View style={{
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'row-reverse'
-        }}>
+        <View style={styles.langContainer}>
           <Button
             onPress={() => {
               setShowLangModal(true);
             }}
           >{lang}</Button>
         </View>
-        <Text style={{
-          marginTop: 30,
-          marginBottom: 60,
-          textAlign: 'center'
-        }}>
+        <Text style={styles.logoContainer}>
           APP_LOGO
         </Text>
       </SafeAreaView>
@@ -148,7 +172,7 @@ export default function SignUpScreen({ navigation }: any) {
         keyboardType="email-address"
         mode="outlined"
         value={email}
-        style={{ marginTop: 5 }}
+        style={styles.input}
         onFocus={() => setEmailTouched(true)}
         onChangeText={(text) => {
           setEmail(text);
@@ -167,7 +191,7 @@ export default function SignUpScreen({ navigation }: any) {
           setPassword(text);
         }}
         secureTextEntry
-        style={{ marginTop: 5 }}
+        style={styles.input}
         error={passwordTouched && !!passwordError} />
 
       {passwordTouched && !!passwordError && <HelperText type="error">{t(passwordError)}</HelperText>}
@@ -183,23 +207,17 @@ export default function SignUpScreen({ navigation }: any) {
           setError('');
         }}
         secureTextEntry
-        style={{ marginTop: 5 }}
+        style={styles.input}
         error={confirmPasswordTouched && !!confirmPasswordError} />
 
       {confirmPasswordTouched && !!confirmPasswordError && <HelperText type="error">{t(confirmPasswordError)}</HelperText>}
 
-      {!!error && (<Text style={{ color: Colors.red900 }}>{error}</Text>)}
+      {!!error && (<HelperText type="error">{error}</HelperText>)}
 
       <MatButton
         disabled={loading}
-        labelStyle={{
-          color: Colors.white
-        }}
-        style={{
-          width: '100%',
-          marginTop: 15,
-          borderRadius: 1000,
-        }}
+        labelStyle={styles.buttonLabel}
+        style={[styles.marginTop, styles.button]}
         uppercase={false}
         mode="contained"
         onPress={onSignup}
@@ -207,7 +225,7 @@ export default function SignUpScreen({ navigation }: any) {
         {t('Sign up')}
       </MatButton>
 
-      <Text style={{ textAlign: 'center', marginTop: 10 }}>{t('Or')}</Text>
+      {/* <Text style={{ textAlign: 'center', marginTop: 10 }}>{t('Or')}</Text>
 
       <MatButton
         disabled={loading}
@@ -225,10 +243,10 @@ export default function SignUpScreen({ navigation }: any) {
         onPress={onSignup}
       >
         {t('Join With Google')}
-      </MatButton>
+      </MatButton> */}
 
       <MatButton
-        style={{ marginTop: 15 }}
+        style={styles.marginTop}
         mode="text"
         disabled={loading}
         loading={loading}

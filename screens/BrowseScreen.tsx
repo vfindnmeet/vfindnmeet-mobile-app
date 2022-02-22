@@ -130,32 +130,32 @@ export default function BrowseScreen(props: any) {
     //   return;
     // }
 
-    // fetchItems(1)
-    //   .then((items: any[]) => {
-    //     // if (!isMounted.current) return;
+    fetchItems(1)
+      .then((items: any[]) => {
+        if (!isMounted.current) return;
 
-    //     // const r: any[] = [];
-    //     // for (let i = 0; i < 15 || i < items.length; i++) {
-    //     //   r.push(items[i]);
-    //     // }
+        // const r: any[] = [];
+        // for (let i = 0; i < 15 || i < items.length; i++) {
+        //   r.push(items[i]);
+        // }
 
-    //     // console.log('fetched items. Took:', Date.now() - n);
-    //     // console.log('set items ..');
-    //     // setUsers(r);
-    //     setUsers(items);
+        // console.log('fetched items. Took:', Date.now() - n);
+        // console.log('set items ..');
+        // setUsers(r);
+        setUsers(items);
 
-    //     // cache['k1'] = items;
-    //     // if (items.length > 0) {
-    //     //   setLastTs(items[items.length - 1].addedAt);
-    //     // } else {
-    //     //   setHasMore(false);
-    //     // }
-    //     if (items.length <= 0) {
-    //       // setHasMore(false);
-    //     }
-    //     setLoading(false);
-    //   });
-    // // setPage(1);
+        // cache['k1'] = items;
+        // if (items.length > 0) {
+        //   setLastTs(items[items.length - 1].addedAt);
+        // } else {
+        //   setHasMore(false);
+        // }
+        if (items.length <= 0) {
+          // setHasMore(false);
+        }
+        setLoading(false);
+      });
+    // setPage(1);
   }, [onlineOnly]);
 
   const fetchItems = (_page: number) => {

@@ -35,6 +35,13 @@ const styles = EStyleSheet.create({
     flex: 1,
     // marginBottom: '35rem'
   },
+  noResultsTitle: {
+    fontSize: '20rem',
+    // fontWeight: 'bold'
+  },
+  noResultsText: {
+    fontSize: '15rem',
+  }
 });
 
 function UserProf({
@@ -149,11 +156,12 @@ export default function EncountersScreen(props: any) {
         <View style={{
           flex: 1,
           display: 'flex',
-          flexDirection: 'row',
+          flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center'
         }}>
-          <Text>{t('No recommendations found.')}</Text>
+          <Text style={styles.noResultsTitle}>{t('No recommendations found.')}</Text>
+          <Text style={styles.noResultsText}>{t('Try cheking later.')}</Text>
         </View>
         <CBottomTabs />
       </View>

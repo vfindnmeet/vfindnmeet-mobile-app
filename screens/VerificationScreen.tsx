@@ -72,7 +72,7 @@ export default function VerificationScreen({ }: any) {
       })
       .catch(e => {
         handleError(e, dispatch);
-      });;
+      });
   }, []);
 
   if (loading || hasPermission === null) {
