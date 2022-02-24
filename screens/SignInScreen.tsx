@@ -27,6 +27,7 @@ import LanguageBottomModal from '../components/LanguageBottomModal';
 import { STORAGE_LANG_KEY, STORAGE_LOGIN_DATA_KEY } from '../constants';
 import { useIsMounted } from '../hooks/useIsMounted';
 import EStyleSheet from 'react-native-extended-stylesheet';
+import { t } from 'i18next';
 
 const styles = EStyleSheet.create({
   container: {
@@ -65,6 +66,8 @@ export default function SignInScreen({ navigation }: any) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
+  const [suspended, setSuspended] = useState(false);
+
   const [lang, setLang] = useState<string | null>('');
   const [showLangModal, setShowLangModal] = useState(false);
 
@@ -92,10 +95,20 @@ export default function SignInScreen({ navigation }: any) {
         // console.log(result);
         // setLoading(false);
 
+        if (result.status === 'suspended') {
+          if (isMounted.current) setSuspended(true);
+
+          return result;
+        }
+
         return setStorageItem(STORAGE_LOGIN_DATA_KEY, JSON.stringify(result))
           .then(() => result);
       })
-      .then((result) => dispatch(setLoggedUser(result)))
+      .then((result) => {
+        if (result.status !== 'suspended') {
+          dispatch(setLoggedUser(result));
+        }
+      })
       .catch(err => {
         // console.log('login err =>', e.message);
         // setErrorMessage(e.getMessage());
@@ -142,6 +155,15 @@ export default function SignInScreen({ navigation }: any) {
     //   }))
     //   .then(({ lat, lon }) => loginReq(lat, lon))
     //   .catch(() => loginReq());
+  }
+
+  if (suspended) {
+    return <SuspendedPage
+      goToLogin={() => {
+        setSuspended(false);
+        setPassword('');
+      }}
+    />
   }
 
   return (
@@ -239,3 +261,27 @@ export default function SignInScreen({ navigation }: any) {
     </View>
   );
 };
+
+function SuspendedPage({ goToLogin }: { goToLogin: () => void }) {
+  return (
+    <View style={{
+      flex: 1,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+    }}>
+      <Text style={{
+        fontSize: 25,
+        fontWeight: 'bold'
+      }}>{t('Account suspended')}</Text>
+      <Text style={{
+        fontSize: 15,
+      }}>{t('Your account has been suspended.')}</Text>
+
+      <Button
+        uppercase={false}
+        onPress={goToLogin}
+      >{t('Return to login')}</Button>
+    </View>
+  );
+}
