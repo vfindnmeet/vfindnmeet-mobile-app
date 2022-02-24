@@ -9,6 +9,7 @@ const a = {
   'General Settings': 'Общи настройки',
 
   // buttons
+  'Skip': 'Пропусни',
   'Make profile picture': 'Направи профилна снимка',
   'Delete': 'Изтрий',
   'Cancel': 'Отмени',
@@ -74,6 +75,7 @@ const a = {
   'Yesterday at': 'Вчера от',
 
   // texts
+  'Don\'t show again after like.': 'Не показвай отново след харесване.',
   'km away': 'км',//'километра разстояние',
   'Not delivered': 'Не е доставено',
   'No chat history found.': 'Няма намерена история.',

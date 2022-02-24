@@ -1,24 +1,32 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Colors, IconButton } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
-import { MAIN_COLOR } from '../../constants';
+import { MAIN_COLOR, STORAGE_SHOW_INTRO_MODAL } from '../../constants';
 import { useIsMounted } from '../../hooks/useIsMounted';
 import { likeUser } from '../../services/api';
 import { userLiked } from '../../store/actions/like';
-import { showMatchModal } from '../../store/actions/modal';
+import { showIntroModal, showMatchModal } from '../../store/actions/modal';
 import { setLikesCount } from '../../store/actions/notification';
 import { getTokenSelector } from '../../store/selectors/auth';
-import { handleError, throwErrorIfErrorStatusCode } from '../../utils';
+import { getStorageItem, handleError, setStorageItem, throwErrorIfErrorStatusCode } from '../../utils';
 import { BUTTON_SIZE } from './common';
 
-export default function LikeButton({ userId, disabled, styles }: any) {
+export default function LikeButton({ userId, user, disabled, styles }: any) {
   const dispatch = useDispatch();
   const isMounted = useIsMounted();
   const token = useSelector(getTokenSelector);
-  const { t } = useTranslation();
+  // const { t } = useTranslation();
 
   const [loading, setLoading] = useState(false);
+  const [checked, setChecked] = useState<null | boolean>(null);
+  // setStorageItem(STORAGE_SHOW_INTRO_MODAL, 'false');
+  useEffect(() => {
+    getStorageItem(STORAGE_SHOW_INTRO_MODAL)
+      .then((checked) => {
+        setChecked(checked === 'true');
+      });
+  }, []);
 
   return (
     <IconButton
@@ -57,25 +65,50 @@ export default function LikeButton({ userId, disabled, styles }: any) {
       // uppercase={false}
       // loading={loading}
       onPress={() => {
-        console.log('--------!!!');
         if (loading) return;
 
         // dispatch(userLiked(userId));
         // return;
+
+        // dispatch(showIntroModal({
+        //   userId,
+        //   name: user?.name,
+        //   liked: true,
+        // }));
+        // // dispatch(userLiked(userId));
 
         setLoading(true);
 
         likeUser(userId, token)
           .then(throwErrorIfErrorStatusCode)
           .then(result => result.json())
-          .then(({ status, me, user, likesCount }: any) => {
-            dispatch(userLiked(userId));
-
+          .then(({
+            likeId,
+            hasMessage,
+            status,
+            me,
+            user,
+            likesCount
+          }: any) => {
             if (status === 'matched') {
               console.log('ONE MATCHED MODAL..', me, user);
               dispatch(setLikesCount(likesCount));
               dispatch(showMatchModal({ me, user }));
+            } else if (status === 'liked') {
+              if (checked || !hasMessage) {
+                dispatch(userLiked(userId));
+              } else {
+                dispatch(showIntroModal({
+                  userId,
+                  likeId,
+                  name: 'un1',
+                  liked: true,
+                }));
+              }
             }
+
+            // already_matched, matched, liked
+            // dispatch(userLiked(userId));
 
             // if (!isMounted.current) return;
 

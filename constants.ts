@@ -4,6 +4,7 @@ export const STORAGE_LANG_KEY = 'vi-lang';
 export const STORAGE_LOGIN_DATA_KEY = 'vi-user-data';
 export const STORAGE_BROWSE_OPTIONS_KEY = 'vi-browse-options';
 export const STORAGE_SHOW_PERSONALITY_INFO_KEY = 'vi-show-personality-info';
+export const STORAGE_SHOW_INTRO_MODAL = 'VI_SHOW_INTRO_MODAL';
 
 export const MAIN_COLOR = '#ff7a70';
 

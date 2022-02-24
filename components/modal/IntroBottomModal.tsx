@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import EStyleSheet from 'react-native-extended-stylesheet';
-import { Button, HelperText, TextInput } from 'react-native-paper';
+import { Button, Checkbox, HelperText, TextInput } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
+import { STORAGE_SHOW_INTRO_MODAL } from '../../constants';
 import UnauthorizedError from '../../errors/UnauthorizedError';
 import { useIsMounted } from '../../hooks/useIsMounted';
 import { updateLikeMessage } from '../../services/api';
@@ -11,7 +12,7 @@ import { logOutUser } from '../../store/actions/auth';
 import { userIntoUpdated, userLiked } from '../../store/actions/like';
 import { getLoggedUserIdSelector, getTokenSelector } from '../../store/selectors/auth';
 import { getIntroModalDataSelector } from '../../store/selectors/modal';
-import { getErrorMessage, handleError, throwErrorIfErrorStatusCode } from '../../utils';
+import { getErrorMessage, getStorageItem, handleError, setStorageItem, throwErrorIfErrorStatusCode } from '../../utils';
 import BottomModal from '../BottomModal';
 import ItemHeading from '../profileInfo/ItemHeading';
 
@@ -26,17 +27,32 @@ const styles = EStyleSheet.create({
   buttonsContainer: {
     display: 'flex',
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: '5rem',
+    // justifyContent: 'flex-end',
+    // marginTop: '5rem',
     padding: '5rem',
     paddingTop: 0,
+  },
+  checkboxCont: {
+    marginTop: '5rem',
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+  },
+  button: {
+    margin: '2rem',
   }
+  // title: {
+  //   padding: 10rem
+  // }
 });
 
 export default function IntroBottomModal({ show, onHide }: any) {
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const [checked, setChecked] = useState<null | boolean>(null);
 
   const dispatch = useDispatch();
   const isMounted = useIsMounted();
@@ -45,6 +61,13 @@ export default function IntroBottomModal({ show, onHide }: any) {
   const data = useSelector(getIntroModalDataSelector);
   const token = useSelector(getTokenSelector);
   const loggedUserId = useSelector(getLoggedUserIdSelector);
+
+  useEffect(() => {
+    getStorageItem(STORAGE_SHOW_INTRO_MODAL)
+      .then((checked) => {
+        setChecked(checked === 'true');
+      });
+  }, []);
 
   useEffect(() => {
     if (show) {
@@ -56,11 +79,24 @@ export default function IntroBottomModal({ show, onHide }: any) {
   const hide = () => {
     if (loading) return;
 
+    if (data.liked) {
+      dispatch(userLiked(data.userId));
+    }
+
     onHide();
   };
 
+  const onCheck = () => {
+    const nc = !checked;
+
+    setStorageItem('VI_SHOW_INTRO_MODAL', nc ? 'true' : 'false')
+      .then(() => {
+        setChecked(nc);
+      });
+  };
+
   return (
-    <BottomModal show={show} onHide={onHide} style={{ padding: 0, }}>
+    <BottomModal show={show} onHide={hide} style={{ padding: 0, }}>
       <View>
         {/* <Text style={{
           fontSize: 23,
@@ -70,7 +106,7 @@ export default function IntroBottomModal({ show, onHide }: any) {
           paddingBottom: 0,
         }}>{t('Send intro message to')} {data.name}</Text> */}
         <ItemHeading
-          style={styles.styles}
+          style={styles.title}
           onHide={hide}
           disabled={loading}
         >{t('Send intro message to')} {data.name}</ItemHeading>
@@ -84,9 +120,21 @@ export default function IntroBottomModal({ show, onHide }: any) {
 
         {!!error && (<HelperText type="error">{t(error)}</HelperText>)}
 
-        <View
-          style={styles.buttonsContainer}
-        >
+        {data.liked && (
+          <TouchableWithoutFeedback onPress={onCheck}>
+            <View style={styles.checkboxCont}>
+              <Checkbox
+                status={checked ? 'checked' : 'unchecked'}
+                onPress={onCheck}
+              />
+              <Text>{t('Don\'t show again after like.')}</Text>
+            </View>
+          </TouchableWithoutFeedback>
+        )}
+
+        <View style={[styles.buttonsContainer, {
+          justifyContent: data.liked ? 'space-between' : 'flex-end',
+        }]}>
           {/* <Button
             style={{ margin: 2 }}
             mode="text"
@@ -94,8 +142,17 @@ export default function IntroBottomModal({ show, onHide }: any) {
             disabled={loading}
             onPress={hide}
           >{t('Close')}</Button> */}
+          {data.liked && (
+            <Button
+              style={styles.button}
+              mode="text"
+              uppercase={false}
+              disabled={loading}
+              onPress={hide}
+            >{t('Skip')}</Button>
+          )}
           <Button
-            style={{ margin: 2 }}
+            style={styles.button}
             mode="text"
             uppercase={false}
             disabled={loading || typeof text !== 'string' || '' === text.trim()}

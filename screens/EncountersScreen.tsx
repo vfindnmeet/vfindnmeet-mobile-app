@@ -44,7 +44,7 @@ const styles = EStyleSheet.create({
   }
 });
 
-function UserProf({
+function Cont({
   userId,
   distanceInKm,
   showActions
@@ -62,14 +62,23 @@ function UserProf({
   }
 
   return (
-    <UserProfile
-      user={user}
-      allInterests={allInterests}
-      allProfileQuestions={allProfileQuestions}
-      distanceInKm={distanceInKm}
-      showActions={false}
-    // userId={props.route.params.userId}
-    />
+    <>
+      <UserProfile
+        user={user}
+        allInterests={allInterests}
+        allProfileQuestions={allProfileQuestions}
+        distanceInKm={distanceInKm}
+        showActions={false}
+      // userId={props.route.params.userId}
+      />
+
+      {!loading && (
+        <ActionsCont style={styles.actionsContainer}>
+          <DislikeButton userId={userId} />
+          <LikeButton userId={userId} user={user} />
+        </ActionsCont>
+      )}
+    </>
   );
 }
 
@@ -79,17 +88,6 @@ export default function EncountersScreen(props: any) {
   const isMounted = useIsMounted();
 
   useRouteTrack();
-  // const route = useRoute();
-  // useEffect(() => {
-  //   dispatch(setRoute({
-  //     routeName: route.name,
-  //     params: route.params
-  //   }));
-
-  //   return () => {
-  //     dispatch(clearRoute());
-  //   };
-  // }, []);
 
   const token = useSelector(getTokenSelector);
   const loading = useSelector(getRecommendationsLoadingSelector);
@@ -181,28 +179,11 @@ export default function EncountersScreen(props: any) {
       <SearchInfoHeader />
       <View style={styles.container}>
         <View style={styles.innerContainer}>
-          <UserProf
+          <Cont
             userId={userId}
             distanceInKm={distanceInKm}
             showActions={false}
           />
-          {/* <UserProfile
-            userId={userId}
-            distanceInKm={distanceInKm}
-            showActions={false}
-            setLoadingUser={setLoadingUser}
-          /> */}
-
-          {!loading && (
-            <ActionsCont style={styles.actionsContainer}>
-              <DislikeButton userId={userId} />
-              <LikeButton userId={userId} />
-              {/* <ActionItemCont>
-              </ActionItemCont>
-              <ActionItemCont>
-              </ActionItemCont> */}
-            </ActionsCont>
-          )}
         </View>
       </View>
       <CBottomTabs />
