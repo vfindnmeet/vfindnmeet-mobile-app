@@ -92,10 +92,11 @@ export default function LikeButton({ userId, user, disabled, styles }: any) {
           }: any) => {
             if (status === 'matched') {
               console.log('ONE MATCHED MODAL..', me, user);
+              dispatch(userLiked(userId));
               dispatch(setLikesCount(likesCount));
               dispatch(showMatchModal({ me, user }));
             } else if (status === 'liked') {
-              if (checked || !hasMessage) {
+              if (checked || hasMessage) {
                 dispatch(userLiked(userId));
               } else {
                 dispatch(showIntroModal({
