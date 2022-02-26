@@ -19,16 +19,18 @@ export default function LikeButton({ userId, user, disabled, styles }: any) {
   // const { t } = useTranslation();
 
   const [loading, setLoading] = useState(false);
-  const [checked, setChecked] = useState<null | boolean>(null);
+  const [showIntroModalC, setShowIntroModalC] = useState<null | boolean>(null);
   // setStorageItem(STORAGE_SHOW_INTRO_MODAL, 'false');
   useEffect(() => {
     getStorageItem(STORAGE_SHOW_INTRO_MODAL)
       .then((checked) => {
         if (!isMounted.current) return;
 
-        setChecked(checked === 'true');
+        setShowIntroModalC(checked !== 'false');
       });
   }, []);
+
+  console.log('==========================>', showIntroModalC);
 
   return (
     <IconButton
@@ -98,7 +100,8 @@ export default function LikeButton({ userId, user, disabled, styles }: any) {
               dispatch(setLikesCount(likesCount));
               dispatch(showMatchModal({ me, user }));
             } else if (status === 'liked') {
-              if (checked || hasMessage) {
+              console.log(showIntroModalC || hasMessage, showIntroModalC, hasMessage);
+              if (!showIntroModalC || hasMessage) {
                 dispatch(userLiked(userId));
               } else {
                 dispatch(showIntroModal({

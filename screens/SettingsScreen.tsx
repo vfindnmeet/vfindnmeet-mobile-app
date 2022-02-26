@@ -1,10 +1,8 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, ScrollView } from 'react-native';
-import CBottomTabs from '../navigation/CBottomTabs';
-import CustomProfileInfoHeader from '../navigation/CustomProfileInfoHeader';
-import { ActivityIndicator, Button, Colors, Divider, Switch, Text, TextInput } from 'react-native-paper';
+import { Button, Colors, Divider, Switch, Text, TextInput } from 'react-native-paper';
 import { getSettingsInfo, logout, setPushNotifSettings, updateProfile } from '../services/api';
-import { arrayToOptions, DEFAULT_LANG, getInterestedInOption, getLang, getOptionItem, getStorageItem, handleError, LANGUAGE_OPTIONS, retryHttpRequest, setStorageItem, throwErrorIfErrorStatusCode } from '../utils';
+import { arrayToOptions, getInterestedInOption, getLang, getOptionItem, getStorageItem, handleError, LANGUAGE_OPTIONS, retryHttpRequest, setStorageItem, throwErrorIfErrorStatusCode } from '../utils';
 import { useDispatch, useSelector } from 'react-redux';
 import ItemHeading from '../components/profileInfo/ItemHeading';
 import EditItem from '../components/profileInfo/EditItem';
@@ -17,11 +15,57 @@ import moment from 'moment';
 import EditOptions from '../components/profileInfo/EditOptions';
 import SettingsHeader from '../navigation/SettingsHeader';
 import { useTranslation } from 'react-i18next';
-import { MAIN_COLOR, STORAGE_LANG_KEY } from '../constants';
+import { STORAGE_LANG_KEY, STORAGE_SHOW_INTRO_MODAL } from '../constants';
 import { showDeactivateModal } from '../store/actions/modal';
 import { logOutUser } from '../store/actions/auth';
 import PageLoader from '../components/common/PageLoader';
-import { WheelPicker } from "react-native-wheel-picker-android";
+import EStyleSheet from 'react-native-extended-stylesheet';
+
+const styles = EStyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  innerContainer: {
+    flex: 1,
+    padding: '10rem',
+  },
+  divider: {
+    marginTop: '30rem',
+    marginBottom: '20rem',
+  },
+  radioItemContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    flexWrap: 'nowrap'
+  },
+  radioTextContainer: {
+    flexShrink: 1
+  },
+  radioItemTitle: {
+    fontSize: '18rem',
+    fontWeight: 'bold'
+  },
+  radioItemMargin: {
+    marginTop: '10rem'
+  },
+  sectionTitle: {
+    fontWeight: 'bold',
+    fontSize: '20rem',
+  },
+  actionButtonsContainer: {
+    marginBottom: '35rem'
+  },
+  modalTitle: {
+    padding: '10rem'
+  },
+  modalButtonsContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: '5rem'
+  }
+});
 
 export default function SettingsScreen(props: any) {
   const isMounted = useIsMounted();
@@ -31,10 +75,12 @@ export default function SettingsScreen(props: any) {
   const [pnMessages, setPnMessages] = useState(false);
   const [pnLikes, setPnLikes] = useState(false);
   const [pnMatches, setPnMatches] = useState(false);
+  const [videoCalls, setVideoCalls] = useState(false);
 
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [loadingLikes, setLoadingLikes] = useState(false);
   const [loadingMatches, setLoadingMatches] = useState(false);
+  const [loadingVideoCalls, setLoadingVideoCalls] = useState(false);
 
   // const onToggleSwitch = () => setIsSwitchOn(!isSwitchOn);
 
@@ -51,6 +97,28 @@ export default function SettingsScreen(props: any) {
   const [lang, setLang] = useState<string | null>(null);
 
   const [loggingOut, setLoggingOut] = useState(false);
+
+  const [showIntroModal, setShowIntroModal] = useState<null | boolean>(null);
+
+  const onCheck = () => {
+    const nc = !showIntroModal;
+
+    setStorageItem(STORAGE_SHOW_INTRO_MODAL, nc ? 'true' : 'false')
+      .then(() => {
+        if (!isMounted.current) return;
+
+        setShowIntroModal(nc);
+      });
+  };
+
+  useEffect(() => {
+    getStorageItem(STORAGE_SHOW_INTRO_MODAL)
+      .then((checked) => {
+        if (!isMounted.current) return;
+
+        setShowIntroModal(checked !== 'false');
+      });
+  }, []);
 
   useEffect(() => {
     getStorageItem(STORAGE_LANG_KEY)
@@ -79,6 +147,8 @@ export default function SettingsScreen(props: any) {
         setPnMessages(json.notif?.messages ?? true);
         setPnLikes(json.notif?.received_likes ?? true);
         setPnMatches(json.notif?.matches ?? true);
+        setVideoCalls(json.notif?.video_calls ?? true);
+
         setLoading(false);
       })
       .catch(e => {
@@ -88,9 +158,7 @@ export default function SettingsScreen(props: any) {
 
   if (loading || !profile || !lang) {
     return (
-      <View style={{
-        flex: 1
-      }}>
+      <View style={styles.container}>
         <SettingsHeader />
         <PageLoader />
         {/* <CBottomTabs /> */}
@@ -99,45 +167,24 @@ export default function SettingsScreen(props: any) {
   }
 
   return (
-    <View style={{
-      flex: 1
-    }}>
+    <View style={styles.container}>
       <SettingsHeader />
-      <ScrollView style={{
-        flex: 1,
-        padding: 10,
-      }}>
-        <Text style={{
-          fontWeight: 'bold',
-          fontSize: 20,
-        }}>{t('Profile')}</Text>
+      <ScrollView style={styles.innerContainer}>
+        <Text style={styles.sectionTitle}>{t('Profile')}</Text>
         <Name name={profile.name} setProfile={setProfile} />
         <Birthday birthday={profile.birthday} age={profile.age} setProfile={setProfile} />
         <Gender gender={profile.gender} setProfile={setProfile} />
         <InterestedIn interestedIn={profile.interested_in} setProfile={setProfile} />
         <Language lang={lang} setLang={setLang} />
 
-        <Divider style={{
-          marginTop: 30,
-          marginBottom: 30,
-        }} />
+        <Divider style={styles.divider} />
 
-        <Text style={{
-          fontWeight: 'bold',
-          fontSize: 20,
-        }}>{t('Push notifications')}</Text>
+        <Text style={styles.sectionTitle}>{t('Push notifications')}</Text>
 
-        <View style={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'space-between'
-        }}>
-          <View>
-            <Text style={{
-              fontSize: 20,
-              fontWeight: 'bold'
-            }}>Messages</Text>
-            <Text>When someone messages you</Text>
+        <View style={[styles.radioItemContainer, styles.radioItemMargin]}>
+          <View style={styles.radioTextContainer}>
+            <Text style={styles.radioItemTitle}>{t('Messages')}</Text>
+            <Text>{t('When someone messages you')}</Text>
           </View>
           <Switch
             disabled={loadingMessages}
@@ -158,18 +205,10 @@ export default function SettingsScreen(props: any) {
           />
         </View>
 
-        <View style={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          marginTop: 10
-        }}>
-          <View>
-            <Text style={{
-              fontSize: 20,
-              fontWeight: 'bold'
-            }}>Received likes</Text>
-            <Text>When someone likes you</Text>
+        <View style={[styles.radioItemContainer, styles.radioItemMargin]}>
+          <View style={styles.radioTextContainer}>
+            <Text style={styles.radioItemTitle}>{t('Received likes')}</Text>
+            <Text>{t('When someone likes you')}</Text>
           </View>
           <Switch
             disabled={loadingLikes}
@@ -190,18 +229,10 @@ export default function SettingsScreen(props: any) {
           />
         </View>
 
-        <View style={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          marginTop: 10
-        }}>
-          <View>
-            <Text style={{
-              fontSize: 20,
-              fontWeight: 'bold'
-            }}>Matches</Text>
-            <Text>When you match with someone</Text>
+        <View style={[styles.radioItemContainer, styles.radioItemMargin]}>
+          <View style={styles.radioTextContainer}>
+            <Text style={styles.radioItemTitle}>{t('Matches')}</Text>
+            <Text>{t('When you match with someone')}</Text>
           </View>
           <Switch
             disabled={loadingMatches}
@@ -221,16 +252,46 @@ export default function SettingsScreen(props: any) {
             }}
           />
         </View>
-        {/*
-        message
-        received likes
-        matches
-        */}
 
-        <Divider style={{
-          marginTop: 30,
-          marginBottom: 30,
-        }} />
+        <Divider style={styles.divider} />
+
+        <View style={styles.radioItemContainer}>
+          <View style={styles.radioTextContainer}>
+            <Text style={styles.radioItemTitle}>{t('Show message modal')}</Text>
+            <Text>{t('When you likes someone - show intro message modal')}</Text>
+          </View>
+          <Switch
+            disabled={showIntroModal === null}
+            value={showIntroModal as boolean}
+            onValueChange={onCheck}
+          />
+        </View>
+
+        <View style={[styles.radioItemContainer, styles.radioItemMargin]}>
+          <View style={styles.radioTextContainer}>
+            <Text style={styles.radioItemTitle}>{t('Receive video calls')}</Text>
+            <Text>{t('Your matches can video call you')}</Text>
+          </View>
+          <Switch
+            disabled={loadingVideoCalls}
+            value={videoCalls}
+            onValueChange={() => {
+              if (loadingVideoCalls) return;
+
+              setLoadingVideoCalls(true);
+
+              const v = !videoCalls;
+              setVideoCalls(v);
+
+              setPushNotifSettings({ videoCalls: v }, token)
+                .finally(() => {
+                  setLoadingVideoCalls(false);
+                });
+            }}
+          />
+        </View>
+
+        <Divider style={styles.divider} />
 
         <View>
           <Button
@@ -266,7 +327,7 @@ export default function SettingsScreen(props: any) {
             }}
           >{t('Logout')}</Button>
         </View>
-        <View>
+        <View style={styles.actionButtonsContainer}>
           <Button
             color={Colors.grey800}
             uppercase={false}
@@ -315,10 +376,8 @@ function Name({ name, setProfile }: any) {
       </EditItem>
 
       <BottomModal show={editing} onHide={onHide} style={{ padding: 0 }}>
-        <View style={{
-          // marginBottom: 15
-        }}>
-          <ItemHeading style={{ padding: 10 }} onHide={onHide} disabled={saving}>{t('What\'s your name?')}</ItemHeading>
+        <View>
+          <ItemHeading style={styles.modalTitle} onHide={onHide} disabled={saving}>{t('What\'s your name?')}</ItemHeading>
           <TextInput
             mode="flat"
             placeholder={t('Your name...')}
@@ -326,12 +385,7 @@ function Name({ name, setProfile }: any) {
             onChangeText={setEditName}
           />
         </View>
-        <View style={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'flex-end',
-          marginTop: 5
-        }}>
+        <View style={styles.modalButtonsContainer}>
           <Button
             uppercase={false}
             disabled={saving}
@@ -398,7 +452,7 @@ function Birthday({ age, birthday, setProfile }: any) {
 
       <BottomModal show={editing} onHide={() => setEditing(false)}>
         <View>
-          <ItemHeading style={{ padding: 10 }} onHide={onHide} disabled={saving}>{t('What\'s your birthday?')}</ItemHeading>
+          <ItemHeading style={styles.modalTitle} onHide={onHide} disabled={saving}>{t('What\'s your birthday?')}</ItemHeading>
           <BirthdayPicker
             birthday={birthday}
             setBirthday={(newBirthday: string) => {
@@ -407,12 +461,7 @@ function Birthday({ age, birthday, setProfile }: any) {
             }}
           />
         </View>
-        <View style={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'flex-end',
-          marginTop: 5
-        }}>
+        <View style={styles.modalButtonsContainer}>
           <Button
             uppercase={false}
             disabled={saving}
@@ -479,10 +528,8 @@ function Gender({ gender, setProfile }: any) {
       </EditItem>
 
       <BottomModal show={editing} onHide={() => setEditing(false)}>
-        <View style={{
-          marginBottom: 15
-        }}>
-          <ItemHeading style={{ padding: 10 }} onHide={onHide} disabled={saving}>{t('What\'s your gender?')}</ItemHeading>
+        <View>
+          <ItemHeading style={styles.modalTitle} onHide={onHide} disabled={saving}>{t('What\'s your gender?')}</ItemHeading>
           <EditOptions
             selected={editGender}
             setSelected={setEditGender}
@@ -493,12 +540,7 @@ function Gender({ gender, setProfile }: any) {
             ])}
           />
         </View>
-        <View style={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'flex-end',
-          marginTop: 5
-        }}>
+        <View style={styles.modalButtonsContainer}>
           <Button
             uppercase={false}
             disabled={saving}
@@ -565,10 +607,8 @@ function InterestedIn({ interestedIn, setProfile }: any) {
       </EditItem>
 
       <BottomModal show={editing} onHide={() => setEditing(false)}>
-        <View style={{
-          marginBottom: 15
-        }}>
-          <ItemHeading style={{ padding: 10 }} onHide={onHide} disabled={saving}>{t('What are you interested in?')}</ItemHeading>
+        <View>
+          <ItemHeading style={styles.modalTitle} onHide={onHide} disabled={saving}>{t('What are you interested in?')}</ItemHeading>
           <EditOptions
             selected={editInterestedIn}
             setSelected={setEditInterestedIn}
@@ -579,12 +619,7 @@ function InterestedIn({ interestedIn, setProfile }: any) {
             ])}
           />
         </View>
-        <View style={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'flex-end',
-          marginTop: 5
-        }}>
+        <View style={styles.modalButtonsContainer}>
           <Button
             uppercase={false}
             disabled={saving}
@@ -646,10 +681,8 @@ function Language({ lang, setLang }: any) {
       </EditItem>
 
       <BottomModal show={editing} onHide={() => setEditing(false)}>
-        <View style={{
-          marginBottom: 15
-        }}>
-          <ItemHeading style={{ padding: 10 }} onHide={onHide} disabled={saving}>{t('Change your language')}</ItemHeading>
+        <View>
+          <ItemHeading style={styles.modalTitle} onHide={onHide} disabled={saving}>{t('Change your language')}</ItemHeading>
           <EditOptions
             selected={edit}
             setSelected={setEdit}
@@ -660,12 +693,7 @@ function Language({ lang, setLang }: any) {
             ])}
           />
         </View>
-        <View style={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'flex-end',
-          marginTop: 5
-        }}>
+        <View style={styles.modalButtonsContainer}>
           <Button
             uppercase={false}
             disabled={saving}

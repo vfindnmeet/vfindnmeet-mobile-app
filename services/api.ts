@@ -630,7 +630,12 @@ export const setPersonality = async (personality: string, token: string) => {
     body: JSON.stringify({ personality })
   });
 }
-export const setPushNotifSettings = async (data: { messages?: boolean; likes?: boolean; matches?: boolean }, token: string) => {
+export const setPushNotifSettings = async (data: {
+  messages?: boolean;
+  likes?: boolean;
+  matches?: boolean;
+  videoCalls?: boolean;
+}, token: string) => {
   return fetch(config.API_ENDPOINT + 'push-notif-settings', {
     method: 'POST',
     headers: addAuthHeader(token, {

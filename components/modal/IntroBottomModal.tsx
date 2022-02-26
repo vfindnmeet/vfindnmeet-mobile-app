@@ -52,7 +52,7 @@ export default function IntroBottomModal({ show, onHide }: any) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const [checked, setChecked] = useState<null | boolean>(null);
+  const [showIntroModal, setShowIntroModal] = useState<null | boolean>(null);
 
   const dispatch = useDispatch();
   const isMounted = useIsMounted();
@@ -67,9 +67,9 @@ export default function IntroBottomModal({ show, onHide }: any) {
       .then((checked) => {
         if (!isMounted.current) return;
 
-        setChecked(checked === 'true');
+        setShowIntroModal(checked !== 'false');
       });
-  }, []);
+  }, [show]);
 
   useEffect(() => {
     if (show) {
@@ -90,11 +90,11 @@ export default function IntroBottomModal({ show, onHide }: any) {
   };
 
   const onCheck = () => {
-    const nc = !checked;
+    const nc = !showIntroModal;
 
-    setStorageItem('VI_SHOW_INTRO_MODAL', nc ? 'true' : 'false')
+    setStorageItem(STORAGE_SHOW_INTRO_MODAL, nc ? 'true' : 'false')
       .then(() => {
-        setChecked(nc);
+        setShowIntroModal(nc);
       });
   };
 
@@ -127,7 +127,7 @@ export default function IntroBottomModal({ show, onHide }: any) {
           <TouchableWithoutFeedback onPress={onCheck}>
             <View style={styles.checkboxCont}>
               <Checkbox
-                status={checked ? 'checked' : 'unchecked'}
+                status={!showIntroModal ? 'checked' : 'unchecked'}
                 onPress={onCheck}
               />
               <Text>{t('Don\'t show again after like.')}</Text>
