@@ -27,6 +27,9 @@ import BackButton from '../navigation/BackButton';
 import { BIG_ICON_SIZE, ICON_SIZE } from '../constants';
 import EStyleSheet from 'react-native-extended-stylesheet';
 import { WsContext } from '../store/WsContext';
+import NotFoundError from '../errors/NotFoundError';
+import BadRequestError from '../errors/BadRequestError';
+import NotFoundUser from '../components/NotFoundUser';
 
 const styles = EStyleSheet.create({
   userContainer: {
@@ -148,7 +151,11 @@ export default function ChatScreen({ route, navigation }: any) {
         // dispatch(setChatSeen(result.chatId, true));
       })
       .catch(e => {
-        handleError(e, dispatch);
+        if (e instanceof NotFoundError || e instanceof BadRequestError) {
+          dispatch(setChat(null));
+        } else {
+          handleError(e, dispatch);
+        }
       });
 
     return () => {
@@ -159,6 +166,12 @@ export default function ChatScreen({ route, navigation }: any) {
   if (loading) {
     return (
       <PageLoader />
+    );
+  }
+
+  if (user?.status !== 'active') {
+    return (
+      <NotFoundUser headerNav={true} />
     );
   }
 

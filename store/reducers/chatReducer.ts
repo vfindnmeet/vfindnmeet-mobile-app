@@ -44,19 +44,17 @@ export default function chatReducer(state = INITIAL_STATE, action: { type: strin
         ...state,
         ...action.payload,
         chats: (state.chats ?? []).map((chat: any) => {
-          if (chat.id === action.payload.user.id) {
+          if (chat.id === action.payload?.user?.id) {
             return {
               ...chat,
-              chatId: action.payload.chatId
+              chatId: action.payload?.chatId
             };
           }
 
           return chat;
         }),
 
-
-        messages: (action.payload.messages ?? []).reverse(),
-
+        messages: (action.payload?.messages ?? []).reverse(),
 
         loading: false
       };

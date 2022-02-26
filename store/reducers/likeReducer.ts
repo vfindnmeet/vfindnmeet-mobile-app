@@ -22,6 +22,8 @@ export default function likeReducer(state = INITIAL_STATE, action: { type: strin
         users: action.payload
       };
     case TYPE_USER_INTRO_UPDATED:
+      if (!state.users) return state;
+
       return {
         ...state,
         users: state.users.map((user: any) => {

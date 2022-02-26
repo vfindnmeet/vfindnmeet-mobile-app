@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useIsMounted } from '../hooks/useIsMounted';
 import { getInterests, getProfileQuestions, getUserProfile } from '../services/api';
 import { setAllInterests, setAllProfileQuestions } from '../store/actions/common';
-import { clearUser, fetchUser, setUser } from '../store/actions/user';
+import { clearUser, fetchUser, setUser, userNotFound } from '../store/actions/user';
 import { getTokenSelector } from '../store/selectors/auth';
 import { getUserLoadingSelector, getUserSelector } from '../store/selectors/user';
 import { retryHttpRequest } from '../utils';
@@ -64,11 +64,15 @@ export default function useUserProfile(userId: string) {
         if (!isMounted.current) return;
 
         dispatch(setUser(result));
+      })
+      .catch(e => {
+        dispatch(userNotFound(userId));
+        dispatch(setUser(null));
       });
 
-    return () => {
-      dispatch(clearUser());
-    };
+    // return () => {
+    //   dispatch(clearUser());
+    // };
   }, [userId]);
 
   return [user, allInterests, allProfileQuestions, loading || !allInterests || !allProfileQuestions];

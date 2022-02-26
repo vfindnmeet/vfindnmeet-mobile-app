@@ -24,7 +24,8 @@ const styles = EStyleSheet.create({
   name: {
     // fontSize: '15.5rem',
     fontSize: '15rem',
-    textAlign: 'center'
+    textAlign: 'center',
+    overflow: 'hidden'
   },
   headingMargin: {
     marginLeft: '5rem',
@@ -129,7 +130,7 @@ export default function ChatsScreen(props: any) {
     );
   }
 
-  const matches: any[] = chats.filter((chat: any) => !chat.lastMessage);
+  const matches: any[] = chats.filter((chat: any) => !chat.lastMessage && chat.status === 'active');
   const messages: any[] = chats.filter((chat: any) => !!chat.lastMessage);
 
   if (chats.length <= 0) {

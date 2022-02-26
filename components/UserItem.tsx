@@ -150,11 +150,12 @@ export default function UserItem({ user }: any) {
           >
             <View style={[styles.contRadius, styles.infoContainer]}>
               <View style={styles.nameCont}>
-                {user.name && user.age && (
+                {user.status === 'active' && user.name && user.age && (
                   <View style={styles.infoInnerContainer}>
                     <Text
                       numberOfLines={1}
-                      style={[styles.titleText, styles.nameText]}>{user.name}</Text>
+                      style={[styles.titleText, styles.nameText]}
+                    >{user.name}</Text>
                     <View style={styles.ageContainer}>
                       {user.age && (
                         <Text style={[styles.titleText, styles.ageText]}>, {user.age}</Text>
@@ -166,6 +167,14 @@ export default function UserItem({ user }: any) {
                         <VerifiedBadge style={styles.marginLeft} />
                       )}
                     </View>
+                  </View>
+                )}
+                {user.status !== 'active' && (
+                  <View style={styles.infoInnerContainer}>
+                    <Text
+                      numberOfLines={1}
+                      style={[styles.titleText, styles.nameText]}
+                    >{t(user.name ?? 'Deleted user')}</Text>
                   </View>
                 )}
               </View>

@@ -65,6 +65,8 @@ export default function IntroBottomModal({ show, onHide }: any) {
   useEffect(() => {
     getStorageItem(STORAGE_SHOW_INTRO_MODAL)
       .then((checked) => {
+        if (!isMounted.current) return;
+
         setChecked(checked === 'true');
       });
   }, []);
@@ -72,6 +74,7 @@ export default function IntroBottomModal({ show, onHide }: any) {
   useEffect(() => {
     if (show) {
       setText('');
+      setError('');
       setLoading(false);
     }
   }, [show]);

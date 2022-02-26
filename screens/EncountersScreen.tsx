@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import EStyleSheet from 'react-native-extended-stylesheet';
@@ -59,6 +59,10 @@ function Cont({
     return (
       <PageLoader />
     );
+  }
+
+  if (!user) {
+    return null;
   }
 
   return (
@@ -166,8 +170,8 @@ export default function EncountersScreen(props: any) {
     );
   }
 
-  // console.log('TID', recommendations[0]);
   // console.log(recommendations);
+  // console.log('TID', recommendations[0]?.userId);
 
   const userId: string = recommendations[0].userId;
   const distanceInKm: number = recommendations[0].distanceInKm;

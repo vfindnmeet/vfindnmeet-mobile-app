@@ -208,7 +208,8 @@ export const retryHttpRequest = (func: any, retryInMs: number = 10000) => {
       } catch (e) {
         // console.log(e);
         if (
-          !(e instanceof BadRequestError) && !(e instanceof UnauthorizedError)
+          e instanceof InternalServerError
+          // !(e instanceof BadRequestError) && !(e instanceof UnauthorizedError)
         ) {
           setTimeout(repeatableFunc, retryInMs);
         } else {

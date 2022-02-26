@@ -24,6 +24,8 @@ export default function LikeButton({ userId, user, disabled, styles }: any) {
   useEffect(() => {
     getStorageItem(STORAGE_SHOW_INTRO_MODAL)
       .then((checked) => {
+        if (!isMounted.current) return;
+
         setChecked(checked === 'true');
       });
   }, []);

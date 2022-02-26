@@ -1,7 +1,10 @@
+import { t } from 'i18next';
 import React from 'react';
 import { View } from 'react-native';
 import EStyleSheet from 'react-native-extended-stylesheet';
+import { Text } from 'react-native-paper';
 import PageLoader from '../components/common/PageLoader';
+import NotFoundUser from '../components/NotFoundUser';
 import Actions from '../components/profile-actions/Actions';
 import UserProfile from '../components/UserProfile';
 import useUserProfile from '../hooks/useUserProfile';
@@ -28,6 +31,29 @@ export default function ProfileScreen(props: any) {
   if (loading) {
     return (
       <PageLoader />
+    );
+  }
+
+  if (user?.status !== 'active') {
+    return (
+      <NotFoundUser bottomNav={true} />
+      // <View style={styles.pageContainer}>
+      //   <View style={[styles.container, {
+      //     display: 'flex',
+      //     flexDirection: 'column',
+      //     justifyContent: 'center',
+      //     alignItems: 'center',
+      //   }]}>
+      //     <Text style={{
+      //       fontSize: 25,
+      //       fontWeight: 'bold'
+      //     }}>{t('User not found')}</Text>
+      //     <Text style={{
+      //       fontSize: 15,
+      //     }}>{t('We\'re sorry. The user you\'re searching for was not found.')}</Text>
+      //   </View>
+      //   <CBottomTabs />
+      // </View>
     );
   }
 
