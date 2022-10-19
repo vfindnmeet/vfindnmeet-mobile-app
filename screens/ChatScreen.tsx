@@ -5,11 +5,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import ImagePicker from '../components/ImagePicker';
 import { useIsMounted } from '../hooks/useIsMounted';
-import { deleteImage, getChat, getChats, getWouldYouRatherQuestions, sendChatMessage } from '../services/api';
+import { deleteImage, getChat, getChats, getWouldYouRatherQuestions, sendChatMessage, videoCall } from '../services/api';
 import { addNotDeliveredChatMessage, clearChat, setChat, setChatSeen, setWouldYouRatherGameQuestions } from '../store/actions/chat';
 import { getLoggedUserIdSelector, getTokenSelector } from '../store/selectors/auth';
 import { getChatLoadingSelector, getChatMessagesSelector, getChatUserSelector, getCurrentChatIdSelector, getHasChatMessagesSelector, getWouldYouRatherQuestionsSelector } from '../store/selectors/chat';
-import { handleError, isVerified, retryHttpRequest, throwErrorIfErrorStatusCode } from '../utils';
+import { handleError, isVerified, requestAudioPermissions, requestCameraPermissions, retryHttpRequest, throwErrorIfErrorStatusCode } from '../utils';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import ChatMessages from '../components/chat/ChatMessages';
 import PageLoader from '../components/common/PageLoader';
@@ -26,7 +26,6 @@ import { shouldShowIcebreakerModalSelector } from '../store/selectors/modal';
 import BackButton from '../navigation/BackButton';
 import { BIG_ICON_SIZE, ICON_SIZE } from '../constants';
 import EStyleSheet from 'react-native-extended-stylesheet';
-import { WsContext } from '../store/WsContext';
 import NotFoundError from '../errors/NotFoundError';
 import BadRequestError from '../errors/BadRequestError';
 import NotFoundUser from '../components/NotFoundUser';
@@ -132,8 +131,7 @@ export default function ChatScreen({ route, navigation }: any) {
   const [message, setMessage] = useState('');
   const [image, setImage] = useState<{ imageId: string; uri_big: string; uri_small: string } | null>(null);
   const [imageLoading, setImageLoading] = useState<boolean>(false);
-
-  const { sendMessage } = useContext(WsContext);
+  const [callLoading, setCallLoading] = useState<boolean>(false);
 
   useEffect(() => {
     retryHttpRequest(() => {
@@ -201,20 +199,40 @@ export default function ChatScreen({ route, navigation }: any) {
               </TouchableWithoutFeedback>
             </View>
 
-            <IconButton
-              icon="video"
-              onPress={() => {
-                // sendMessage('call', { calledId: targetId, width, height });
-                // setCalledId(targetId);
-                // setCallerId(loggedUserId);
-                sendMessage('call', { calledId: user.id, width, height });
+            {user.canReceiveVideoCall && (
+              <IconButton
+                icon="video"
+                disabled={callLoading}
+                onPress={() => {
+                  // sendMessage('call', { calledId: user.id, width, height });
+                  setCallLoading(true);
 
-                navigation.navigate('Call', {
-                  calledId: user.id,
-                  callerId: loggedUserId,
-                });
-              }}
-            />
+                  (async () => {
+                    const audioGranted = await requestAudioPermissions();
+                    const cameraGranted = await requestCameraPermissions();
+
+                    if (audioGranted && cameraGranted) {
+                      videoCall({ calledId: user.id, width, height }, token)
+                        .then(response => response.json())
+                        .then(response => {
+                          if (!response?.callId) return;
+
+                          navigation.navigate('Call', response);
+                        })
+                        .catch(e => {
+                          handleError(e, dispatch);
+                        })
+                        .finally(() => {
+                          setCallLoading(false);
+                        });
+                    }
+                  })()
+                    .catch(() => {
+                      setCallLoading(false);
+                    });
+                }}
+              />
+            )}
           </View>
         </SafeAreaView>
 

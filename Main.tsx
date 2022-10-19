@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { AppScreen, AuthScreen } from './navigation/Navigator1';
 import OnboardingScreen from './screens/OnboardingScreen';
 import { useSelector } from 'react-redux';
-import { getLoggedUserIdSelector, getTokenSelector } from './store/selectors/auth';
+import { getTokenSelector } from './store/selectors/auth';
 import { getOnboardingLoadingSelector, getOnboardingSelector } from './store/selectors/onboarding';
 import usePushNotification from './hooks/usePushNotification';
 import PageLoader from './components/common/PageLoader';
@@ -14,8 +14,7 @@ import messaging from '@react-native-firebase/messaging';
 import { retryHttpRequest } from './utils';
 import { registerPushNotificationToken } from './services/api';
 import WsContextProvider from './store/WsContext';
-import useOnMessage from './hooks/useOnMessage';
-import { useNavigation } from '@react-navigation/native';
+import useVideoCallHandle from './hooks/calling/useVideoCallHandle';
 
 function usePushToken() {
   const token = useSelector(getTokenSelector);
@@ -50,52 +49,17 @@ function usePushToken() {
   }, [token]);
 }
 
-function useVideoCallHandle() {
-  const navigation: any = useNavigation();
-  const loggedUserId = useSelector(getLoggedUserIdSelector);
-
-  useOnMessage(({ type, payload }: { type: string; payload: any; }) => {
-    switch (type) {
-      // logged user has accepted the call but from
-      // other WebSocket connection (another tab or app)
-      case 'call-accepted-oc':
-        // setIncommingCall(payload);
-
-        break;
-      case 'called':
-        // setIncommingCall(payload);
-        navigation.navigate('Call', {
-          calledId: loggedUserId,
-          callerId: payload.callerId,
-          remoteScreenDimension: {
-            width: payload.width,
-            height: payload.height,
-          }
-        });
-
-        break;
-      // case 'call-cancelled':
-      //   setIncommingCall(null);
-    }
-  });
-}
-
 function LoggedIn() {
   const token = useSelector(getTokenSelector);
 
   usePushNotification();
   useHandleWsMessage();
   useSyncLocation(token);
-  // useFetchOnboardingState(token);
-
   useVideoCallHandle();
-
   usePushToken();
 
   return (
-    <WsContextProvider>
-      <AppScreen />
-    </WsContextProvider>
+    <AppScreen />
   );
 }
 
@@ -141,6 +105,8 @@ export default function Main() {
   }
 
   return (
-    <LoggedIn />
+    <WsContextProvider>
+      <LoggedIn />
+    </WsContextProvider>
   );
 }

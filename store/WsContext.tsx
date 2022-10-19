@@ -1,4 +1,4 @@
-import React, { createContext, useEffect, useRef, useState } from "react";
+import React, { createContext, useEffect, useMemo, useRef, useState } from "react";
 import { w3cwebsocket } from "websocket";
 import { useDispatch, useSelector } from "react-redux";
 import { getLoggedUserIdSelector, getTokenSelector } from "./selectors/auth";
@@ -10,6 +10,8 @@ import { parseJson, retryHttpRequest, throwErrorIfErrorStatusCode } from "../uti
 import { getRouteSelector } from "./selectors/route";
 import { getMessagesAfterTs, getNotSeenMessagesPerChat } from "../services/api";
 import { useIsMounted } from "../hooks/useIsMounted";
+import { useNavigation } from "@react-navigation/native";
+import { Subject } from 'rxjs';
 
 const RECONNECT_AFTER_TIME = 5000; // 5 seconds
 const PING_INTERVAL_TIME = 15000; // 15 seconds
@@ -90,17 +92,16 @@ export const WsContext = createContext({
 
 export default function WsContextProvider(props: any) {
   const dispatch = useDispatch();
+  const navigation: any = useNavigation();
   const isMounted = useIsMounted();
 
   const wsRef = useRef<any>();
+  const subject = useMemo(() => new Subject(), []);
 
   const route = useSelector(getRouteSelector);
   const chatMessages = useSelector(getChatMessagesSelector);
   // const currentChatId = useSelector(getCurrentChatIdSelector);
   const token = useSelector(getTokenSelector);
-
-  // const [socket, setSocket] = useState<any>(null);
-  const [lastMessage, setLastMessage] = useState<any | null>(null);
 
   const [wsReopen, setWsReopen] = useState<any | null>(null);
 
@@ -162,17 +163,20 @@ export default function WsContextProvider(props: any) {
     // setSocket(
     wsRef.current = createWS({
       token,
-      onMessage: (msg) => {
-        if (msg.type === 'msg') {
-          console.log('MSG:', JSON.stringify(msg.payload, null, 2))
-          dispatch(addChatMessage(msg.payload));
-        } else if (msg.type === 'notifs_count') {
-          dispatch(setNotifsCount(msg.payload));
-        } else if (msg.type === 'liked') {
-          dispatch(setLikesCount(msg.payload?.likesCount));
+      onMessage: ({ type, payload }: { type: string, payload: any }) => {
+        if (type === 'msg') {
+          dispatch(addChatMessage(payload));
+        } else if (type === 'notifs_count') {
+          dispatch(setNotifsCount(payload));
+
+          if (payload.videoCall) {
+            navigation.navigate('Call', payload.videoCall);
+          }
+        } else if (type === 'liked') {
+          dispatch(setLikesCount(payload?.likesCount));
         }
 
-        setLastMessage(msg);
+        subject.next({ type, payload });
       },
       reopenWs: () => initWS()
     });
@@ -213,7 +217,8 @@ export default function WsContextProvider(props: any) {
   return (
     <WsContext.Provider value={{
       sendMessage,
-      lastMessage
+      // lastMessage,
+      wsMessageSubject: subject
     }}>
       {props.children}
     </WsContext.Provider>

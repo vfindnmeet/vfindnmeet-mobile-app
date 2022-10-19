@@ -128,7 +128,7 @@ export default function ChatMessages() {
 
   const loggedUserId = useSelector(getLoggedUserIdSelector);
 
-  let preDate: string | null = null;
+  // let preDate: string | null = null;
 
   // console.log('------------------');
   // messages.forEach((i: any) => {
@@ -162,9 +162,12 @@ export default function ChatMessages() {
           const cDate = tsToDate(message.createdAt);
 
           // const diffDate = preDate !== cDate;
+          const d = messages[data.index - 1]?.createdAt;
+          const preDate = d ? tsToDate(d) : null;
           const showDate = !!preDate && preDate !== cDate;
           const pDate = preDate;
-          preDate = cDate;
+          // console.log(pDate, cDate, message.text);
+          // preDate = cDate;
 
           // console.log('preDate', pDate, 'cDate', cDate, `'${message.text}'`, showDate);
 

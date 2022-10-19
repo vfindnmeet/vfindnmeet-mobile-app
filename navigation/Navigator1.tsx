@@ -245,6 +245,14 @@ export const AppScreen = () => {
             animationEnabled: false,
           }}
         />
+        <AppStack.Screen
+          name="Call"
+          component={CallScreen}
+          options={{
+            headerShown: false,
+            animationEnabled: true,
+          }}
+        />
       </AppStack.Navigator>
 
       <MIntroBottomModal

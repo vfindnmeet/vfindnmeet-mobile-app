@@ -1,21 +1,15 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { WsContext } from '../store/WsContext';
+import { Subject } from 'rxjs';
 
 export default function useOnMessage(callback: (msg: any) => any, dependencies: any[] = []) {
-  const [msg, setMsg] = useState<any>(null);
-  const { lastMessage } = useContext(WsContext);
+  const { wsMessageSubject }: { wsMessageSubject: Subject<any> } = useContext(WsContext);
 
   useEffect(() => {
-    if (!lastMessage) return;
+    const subscr = wsMessageSubject.subscribe(callback);
 
-    setMsg(lastMessage);
-  }, [lastMessage]);
-
-  useEffect(() => {
-    if (!msg) return;
-
-    callback(msg);
-
-    setMsg(null);
-  }, [msg, ...dependencies]);
+    return () => {
+      subscr.unsubscribe();
+    };
+  }, [...dependencies]);
 }

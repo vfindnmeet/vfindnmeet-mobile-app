@@ -630,6 +630,7 @@ export const setPersonality = async (personality: string, token: string) => {
     body: JSON.stringify({ personality })
   });
 }
+
 export const setPushNotifSettings = async (data: {
   messages?: boolean;
   likes?: boolean;
@@ -637,6 +638,20 @@ export const setPushNotifSettings = async (data: {
   videoCalls?: boolean;
 }, token: string) => {
   return fetch(config.API_ENDPOINT + 'push-notif-settings', {
+    method: 'POST',
+    headers: addAuthHeader(token, {
+      'Content-Type': 'application/json'
+    }),
+    body: JSON.stringify(data)
+  });
+}
+
+export const videoCall = async (data: {
+  calledId: string;
+  width: number;
+  height: number;
+}, token: string) => {
+  return fetch(config.API_ENDPOINT + 'video-call', {
     method: 'POST',
     headers: addAuthHeader(token, {
       'Content-Type': 'application/json'

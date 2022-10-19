@@ -81,8 +81,6 @@ export default function ChatMessage({ chat }: any) {
   // console.log('===>', (chat?.game?.gameType == GameType.ANSWER_QUESTIONS && chat?.game?.gameStage == 3));
   // console.log('isGame', isGame, JSON.stringify(chat, null, 2));
 
-  console.log(chat, postedAgo(+chat.createdAt));
-
   return (
     <>
       {chat.notDelivered && (

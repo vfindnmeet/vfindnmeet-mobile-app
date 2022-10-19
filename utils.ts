@@ -13,8 +13,10 @@ import { showErrorModal } from "./store/actions/modal";
 import { logOutUser } from "./store/actions/auth";
 // import { getExpoPushNotificationToken } from "./PushNotifications";
 import { setAuthInfo } from "./services/api";
-import config from "./config";
+// import config from "./config";
 import messaging from '@react-native-firebase/messaging';
+import { Audio } from 'expo-av';
+// import { request, PERMISSIONS } from 'react-native-permissions';
 
 export const DEFAULT_LANG = 'bg';
 
@@ -129,6 +131,14 @@ export const requestCameraPermissions = async () => {
   return status === 'granted';
 }
 
+export const requestAudioPermissions = async () => {
+  if (Platform.OS === 'web') return true;
+
+  const { status } = await Audio.requestPermissionsAsync();
+
+  return status === 'granted';
+}
+
 export const requestNotificationsPermissions = async () => {
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
   let finalStatus = existingStatus;
@@ -145,8 +155,6 @@ export const requestForegroundLocationPermissions = async () => {
   if (Platform.OS === 'web') return true;
 
   const { status }: any = await Location.requestForegroundPermissionsAsync();
-
-  // console.log('status', status, status === 'granted');
 
   return status === 'granted';
 }

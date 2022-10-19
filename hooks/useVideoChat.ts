@@ -10,14 +10,18 @@ import { WsContext } from '../store/WsContext';
 import { ConnectionState, getCameraStream, webrtcConfig } from '../WebrtcUtils';
 import InCallManager from 'react-native-incall-manager';
 import useOnMessage from './useOnMessage';
+import { useSelector } from 'react-redux';
+import { getLoggedUserIdSelector } from '../store/selectors/auth';
 
 const { width, height } = Dimensions.get('screen');
 
 export default function useVideoChat({
+  callId,
   calledId,
   callerId,
   remoteScreenDimension
 }: {
+  callId?: string;
   calledId: string;
   callerId: string;
   remoteScreenDimension: {
@@ -26,17 +30,17 @@ export default function useVideoChat({
   }
 }) {
   const [peerConnectionState, setPeerConnectionState] = useState(null);
-
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
-
+  const [acceptedAt, setAcceptedAt] = useState<number | null>(null);
   const [localScreenSize, setLocalScreenSize] = useState(remoteScreenDimension);
 
   const peerConnection = useRef<RTCPeerConnection>();
   const localStreamR = useRef<MediaStream | null>(null);
   const remoteStreamR = useRef<MediaStream | null>(null);
 
-  const { loggedUserId, subj, sendMessage } = useContext(WsContext);
+  const loggedUserId = useSelector(getLoggedUserIdSelector);
+  const { sendMessage } = useContext(WsContext);
 
   const initLocalStream = async () => {
     const streamBuffer = await getCameraStream();
@@ -104,11 +108,11 @@ export default function useVideoChat({
     peerConnection.current = new RTCPeerConnection(webrtcConfig);
 
     peerConnection.current.onconnectionstatechange = (e: any) => {
-      console.log('state:', e.target.connectionState);
+      // console.log('state:', e.target.connectionState);
       setPeerConnectionState(e.target.connectionState);
     };
     peerConnection.current.oniceconnectionstatechange = (e: any) => {
-      console.log('ice state:', e.target.iceConnectionState);
+      // console.log('ice state:', e.target.iceConnectionState);
       // setPeerConnectionState(e.target.connectionState);
 
       if ([ConnectionState.CLOSED, ConnectionState.FAILED].includes(e.target.iceConnectionState)) {
@@ -125,7 +129,6 @@ export default function useVideoChat({
         // Listening for frozen streams
         track.onmute = () => {
           sendMessage('video-frozen', { calledId, callerId });
-          // alert('remote stream freeze');
         };
       });
     };
@@ -159,22 +162,20 @@ export default function useVideoChat({
     return () => {
       cleanConnection();
       InCallManager.stop();
-
-      console.log('CLEAR CALL SCREEN');
     };
   }, []);
 
-  // useEffect(() => {
-  //   const f = ({ type, payload }: {
-  //     type: string; payload: any;
-  //   }) => {
-  //     // console.log('===>!', type);
+  useEffect(() => {
+    if (peerConnectionState === ConnectionState.CONNECTED) {
+      setAcceptedAt(null);
+    }
+  }, [peerConnectionState]);
 
   useOnMessage(({ type, payload }: { type: string; payload: any; }) => {
     (async () => {
       switch (type) {
         case 'video-frozen':
-          console.log('VIEDEO FROZEN!!!');
+          // console.log('VIEDEO FROZEN!!!');
           await beginOfferExchange(true);
 
           break;
@@ -187,7 +188,6 @@ export default function useVideoChat({
 
           break;
         case 'p2p-offered':
-
           if (peerConnection.current) {
             peerConnection.current.onicecandidate = (event) => {
               event.candidate && sendMessage('p2p-candidate-answer', {
@@ -216,7 +216,11 @@ export default function useVideoChat({
 
           if (payload.calledId === loggedUserId) return;
 
-          setLocalScreenSize({ width: payload?.width, height: payload?.height });
+          setLocalScreenSize({
+            width: payload?.width,
+            height: payload?.height
+          });
+          setAcceptedAt(Date.now());
 
           await beginOfferExchange();
 
@@ -224,23 +228,19 @@ export default function useVideoChat({
         }
       }
     })();
-    // };
-
-    // subj.subscribe(f);
-
-    // return () => {
-    //   subj.unsubscribe(f);
-    // };
-  }, []);
+    // }, []);
+  }, [calledId, callerId]);
 
   const acceptCall = () => {
     // if (!!callerId && callerId !== loggedUserId) {
     setLocalScreenSize(remoteScreenDimension);
-    sendMessage('call-accept', { callerId, width, height });
+    sendMessage('call-accept', { callId, callerId, width, height });
     // }
   };
 
   return {
+    accepting: !!acceptedAt,
+    acceptedAt,
     peerConnectionState,
     beginOfferExchange,
     localStream,
